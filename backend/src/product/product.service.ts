@@ -16,6 +16,7 @@ export class ProductService {
   ) {}
 
   async create(createProductDto: CreateProductDto, shopkeeperId: string): Promise<Product> {
+    console.log('ProductService.create: shopkeeperId received:', shopkeeperId);
     const shopkeeper = await this.shopkeepersRepository.findOneBy({ id: shopkeeperId });
     if (!shopkeeper) {
       throw new NotFoundException('Shopkeeper not found.');
@@ -34,10 +35,13 @@ export class ProductService {
 
   // New method to find products by shopkeeper ID
   async findByShopkeeperId(shopkeeperId: string): Promise<Product[]> {
-    return this.productsRepository.find({
+    console.log('ProductService.findByShopkeeperId: Filtering by shopkeeperId:', shopkeeperId);
+    const products = await this.productsRepository.find({
       where: { shopkeeper: { id: shopkeeperId } },
       relations: ['shopkeeper'],
     });
+    console.log('ProductService.findByShopkeeperId: Products found:', products);
+    return products;
   }
 
   async findOne(id: string): Promise<Product> {

@@ -7,7 +7,8 @@ import { Request } from 'express'; // Import Request from express
 
 interface AuthenticatedRequest extends Request {
   user: {
-    shopkeeperId: string; // Assuming your JWT strategy attaches shopkeeperId to req.user
+    shopkeeperId: string;
+    email: string; // Add email as well if your payload includes it
   };
 }
 
@@ -27,10 +28,13 @@ export class ProductController {
     return this.productService.findAll();
   }
 
-  @UseGuards(AuthGuard('jwt')) // Protect this route
-  @Get('my-products') // New endpoint for shopkeeper's own products
-  findMyProducts(@Req() req: AuthenticatedRequest) {
-    return this.productService.findByShopkeeperId(req.user.shopkeeperId);
+  @UseGuards(AuthGuard('jwt'))
+  @Get('my-products')
+  async findMyProducts(@Req() req: AuthenticatedRequest) {
+    const shopkeeperId = req.user.shopkeeperId;
+    const products = await this.productService.findByShopkeeperId(shopkeeperId);
+    // THIS IS THE CRITICAL LINE: Ensure it returns an object with shopkeeperId and products
+    return { shopkeeperId, products };
   }
 
   @Get(':id')
@@ -41,7 +45,6 @@ export class ProductController {
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @Req() req: AuthenticatedRequest) {
-    console.log('Shopkeeper ID from token:', req.user.shopkeeperId); // Add this line
     return this.productService.update(id, updateProductDto, req.user.shopkeeperId);
   }
 

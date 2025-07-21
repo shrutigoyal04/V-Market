@@ -38,7 +38,7 @@ export default function NewProductPage() {
         quantity: parseInt(formData.quantity),
         imageUrl: formData.imageUrl || undefined,
       });
-      router.push('/products');
+      router.push('/dashboard'); // Change this line from '/products' to '/dashboard'
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Something went wrong.');
     } finally {
