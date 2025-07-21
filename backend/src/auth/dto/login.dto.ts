@@ -1,4 +1,3 @@
-// filepath: c:\Users\Shruti\Desktop\V-Market\backend\src\auth\dto\login.dto.ts
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {

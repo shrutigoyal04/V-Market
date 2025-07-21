@@ -14,7 +14,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // Ensure 'sub' from payload is mapped to 'shopkeeperId'
     return { shopkeeperId: payload.sub, email: payload.email };
   }
 }
