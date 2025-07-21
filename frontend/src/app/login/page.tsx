@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import authApi from '@/api/auth.api';
+import Cookies from 'js-cookie'; // Add this import
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,7 +21,9 @@ export default function LoginPage() {
 
     try {
       const { access_token } = await authApi.login({ email, password });
-      localStorage.setItem('token', access_token);
+      // localStorage.setItem('token', access_token); // Remove or comment out this line
+      Cookies.set('token', access_token, { expires: 7, secure: process.env.NODE_ENV === 'production' }); // Set token in a cookie
+
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');

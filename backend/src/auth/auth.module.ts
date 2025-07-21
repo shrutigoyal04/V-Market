@@ -22,5 +22,6 @@ import { Shopkeeper } from '../database/entities/shopkeeper.entity';
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
+  exports: [AuthService, JwtModule, JwtStrategy, PassportModule] // Export necessary components
 })
 export class AuthModule {}
