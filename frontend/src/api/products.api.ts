@@ -1,4 +1,5 @@
 import axios from '../lib/axios'; // this uses your configured axiosInstance
+import { Product } from '@/types/product'; // Assuming Product interface is available
 
 interface ProductData {
   name: string;
@@ -8,6 +9,12 @@ interface ProductData {
   imageUrl?: string;
 }
 
+interface ShopkeeperProductsResponse {
+  shopkeeperId: string;
+  products: Product[];
+}
+
+
 const productsApi = {
   // Create a new product
   create: async (data: ProductData) => {
@@ -15,15 +22,21 @@ const productsApi = {
     return response.data;
   },
 
-  // Get all products (keep this for now, but dashboard will use specific one)
-  getAll: async () => {
+  // Get all products
+  getAll: async (): Promise<Product[]> => { // Ensure correct return type
     const response = await axios.get('/products');
     return response.data;
   },
 
-  // New: Get products for the logged-in shopkeeper
-  getShopkeeperProducts: async () => {
+  // Get products for the logged-in shopkeeper
+  getShopkeeperProducts: async (): Promise<ShopkeeperProductsResponse> => {
     const response = await axios.get('/products/my-products');
+    return response.data;
+  },
+
+  // NEW: Get products for a specific shopkeeper (public view)
+  getProductsByShopId: async (shopkeeperId: string): Promise<Product[]> => {
+    const response = await axios.get(`/products/shop/${shopkeeperId}`);
     return response.data;
   },
 

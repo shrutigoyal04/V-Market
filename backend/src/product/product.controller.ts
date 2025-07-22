@@ -42,6 +42,12 @@ export class ProductController {
     return this.productService.findOne(id);
   }
 
+  // NEW PUBLIC ENDPOINT: Get products for a specific shopkeeper (public view)
+  @Get('shop/:shopkeeperId') // Example: GET /products/shop/some-shopkeeper-uuid
+  findShopkeeperProductsPublic(@Param('shopkeeperId') shopkeeperId: string) {
+    return this.productService.findProductsByShopkeeperIdPublic(shopkeeperId);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @Req() req: AuthenticatedRequest) {

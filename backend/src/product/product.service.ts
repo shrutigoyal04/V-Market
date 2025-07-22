@@ -44,6 +44,18 @@ export class ProductService {
     return products;
   }
 
+  // NEW METHOD: Find products by any shopkeeper ID for public viewing
+  async findProductsByShopkeeperIdPublic(shopkeeperId: string): Promise<Product[]> {
+    const shopkeeper = await this.shopkeepersRepository.findOneBy({ id: shopkeeperId });
+    if (!shopkeeper) {
+      throw new NotFoundException('Shopkeeper not found.');
+    }
+    return this.productsRepository.find({
+      where: { shopkeeper: { id: shopkeeperId } },
+      relations: ['shopkeeper'],
+    });
+  }
+
   async findOne(id: string): Promise<Product> {
     const product = await this.productsRepository.findOne({ where: { id }, relations: ['shopkeeper'] });
     if (!product) {
