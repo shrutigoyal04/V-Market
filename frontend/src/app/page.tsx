@@ -1,30 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import shopkeepersApi, { ShopkeeperData } from '@/api/shopkeepers.api';
 import { useRouter } from 'next/navigation';
+import shopkeepersApi from '@/api/shopkeepers.api'; // Import your shopkeepers API
+import { useFetchData } from '@/hooks/useFetchData'; // Import the new generic hook
+import ShopkeeperCard from '@/components/ShopkeeperCard'; // Import the new component
 
 export default function HomePage() {
-  const [shopkeepers, setShopkeepers] = useState<ShopkeeperData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchShopkeepers = async () => {
-      try {
-        const data = await shopkeepersApi.getAll();
-        setShopkeepers(data);
-      } catch (err: any) {
-        console.error('Failed to fetch shopkeepers:', err);
-        setError(err?.response?.data?.message || 'Failed to load shops.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchShopkeepers();
-  }, []); // Empty dependency array means it runs once on mount
+  // Use the generic useFetchData hook
+  const { data: shopkeepers, loading, error } = useFetchData(shopkeepersApi.getAll);
 
   const handleViewShop = (shopkeeperId: string) => {
     router.push(`/shop/${shopkeeperId}`);
@@ -43,16 +28,11 @@ export default function HomePage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.isArray(shopkeepers) && shopkeepers.map((shopkeeper) => (
-            <div
+            <ShopkeeperCard
               key={shopkeeper.id}
-              className="border p-4 rounded-xl shadow-sm hover:shadow-md transition bg-white cursor-pointer"
-              onClick={() => handleViewShop(shopkeeper.id)}
-            >
-              <h2 className="text-xl font-semibold mb-1">{shopkeeper.shopName}</h2>
-              <p className="text-gray-600">Email: {shopkeeper.email}</p>
-              <p className="text-gray-500">Address: {shopkeeper.address}</p>
-              {shopkeeper.phone && <p className="text-gray-500">Phone: {shopkeeper.phone}</p>}
-            </div>
+              shopkeeper={shopkeeper}
+              onClick={handleViewShop}
+            />
           ))}
         </div>
       )}

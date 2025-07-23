@@ -7,9 +7,11 @@ export interface Product {
   imageUrl?: string;
   createdAt: string;
   updatedAt: string;
-  // Add shopkeeper property here:
-  shopkeeper: {
+  shopkeeper: { // Ensure this matches backend's eager loading
     id: string;
-    // Add other shopkeeper properties if needed, e.g., email, shopName
+    email: string;
+    shopName: string;
+    address: string;
+    phone?: string;
   };
 }

@@ -1,41 +1,37 @@
-import { 
-  Controller, 
-  Post, 
-  Body, 
-  Get, 
-  UseGuards, 
-  Request,
-  ValidationPipe 
-} from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express'; // Ensure Request is imported
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    shopkeeperId: string;
+    email: string;
+  };
+}
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(@Body(ValidationPipe) registerDto: RegisterDto) {
+  register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
   @Post('login')
-  login(@Body(ValidationPipe) loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginDto) {
+    const result = await this.authService.login(loginDto);
+    console.log('Backend Login: Token generated for user:', loginDto.email, 'with payload sub:', JSON.parse(Buffer.from(result.access_token.split('.')[1], 'base64').toString()).sub); // LOG 11
+    return result;
   }
 
-  @Get('profile')
   @UseGuards(AuthGuard('jwt'))
-  async getProfile(@Request() req) {
-    const shopkeeper = await this.authService.getShopkeeperProfile(req.user.id);
-    return {
-      id: shopkeeper.id,
-      email: shopkeeper.email,
-      shopName: shopkeeper.shopName,
-      address: shopkeeper.address,
-      phone: shopkeeper.phone
-    };
+  @Get('profile')
+  getProfile(@Req() req: AuthenticatedRequest) {
+    console.log('Backend /auth/profile: User from token (req.user):', req.user); // LOG 12
+    return req.user; // Return only the user data from token for profile
   }
 }

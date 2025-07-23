@@ -97,7 +97,7 @@ export class ProductRequestService {
   // Initiator (product owner) accepts/rejects the request
   async updateRequestStatus(
     requestId: string,
-    initiatorId: string, // The shopkeeper who needs to accept/reject
+    currentShopkeeperId: string, // The ID of the shopkeeper currently logged in
     updateProductRequestDto: UpdateProductRequestDto,
   ): Promise<ProductRequest> {
     const { status } = updateProductRequestDto;
@@ -110,9 +110,16 @@ export class ProductRequestService {
     if (!request) {
       throw new NotFoundException(`Product request with ID "${requestId}" not found.`);
     }
-    if (request.initiator.id !== initiatorId) {
-      throw new ForbiddenException('You are not authorized to update this request.');
+
+    // --- CRITICAL FIX HERE: Change authorization logic ---
+    // A request can be accepted/rejected ONLY by the requester
+    // A request can be CANCELLED by the initiator (handled in removeRequest or a separate status)
+    // Here, for ACCEPTED/REJECTED, only the requester can perform it.
+    if (request.requester.id !== currentShopkeeperId) {
+      throw new ForbiddenException('You are not authorized to accept or reject this request.');
     }
+    // --- END CRITICAL FIX ---
+
     if (request.status !== ProductRequestStatus.PENDING) {
       throw new BadRequestException(`Request is already ${request.status}. Cannot change status.`);
     }
@@ -175,6 +182,7 @@ export class ProductRequestService {
   }
 
   // For completeness, a method to remove requests (e.g., initiator can cancel pending request)
+  // This method's logic is fine as initiator should be able to cancel.
   async removeRequest(requestId: string, shopkeeperId: string): Promise<void> {
     const request = await this.productRequestRepository.findOne({
       where: { id: requestId },
