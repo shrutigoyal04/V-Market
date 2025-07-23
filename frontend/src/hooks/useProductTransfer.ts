@@ -31,11 +31,11 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
   const [transferError, setTransferError] = useState<string | null>(null);
   const [transferLoading, setTransferLoading] = useState(false);
 
-  console.log('useProductTransfer: Received currentShopkeeperId:', currentShopkeeperId); // LOG 8
+  // console.log('useProductTransfer: Received currentShopkeeperId:', currentShopkeeperId); // LOG 8
 
   useEffect(() => {
     const fetchOtherShopkeepers = async () => {
-      console.log('useProductTransfer: Fetching other shopkeepers for ID:', currentShopkeeperId); // LOG 9
+      // console.log('useProductTransfer: Fetching other shopkeepers for ID:', currentShopkeeperId); // LOG 9
       if (!currentShopkeeperId) {
         setOtherShopkeepers([]);
         return;
@@ -45,7 +45,7 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
         const filteredShops = allShops.filter(shop => shop.id !== currentShopkeeperId);
         setOtherShopkeepers(filteredShops);
       } catch (err: any) {
-        console.error('Failed to fetch other shopkeepers:', err);
+        // console.error('Failed to fetch other shopkeepers:', err);
         setTransferError('Failed to load other shops for transfer.');
       }
     };
@@ -79,7 +79,7 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
     setTransferLoading(true);
     setTransferError(null);
 
-    console.log('useProductTransfer: Sending request with Initiator ID (from currentShopkeeperId):', currentShopkeeperId); // LOG 10
+    // console.log('useProductTransfer: Sending request with Initiator ID (from currentShopkeeperId):', currentShopkeeperId); // LOG 10
     const payload: CreateProductRequestPayload = {
       productId: selectedProductForTransfer.id,
       requesterId: targetShopkeeperId,

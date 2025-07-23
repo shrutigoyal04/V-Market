@@ -29,7 +29,7 @@ export const useAuthUser = (): UseAuthUserResult => {
   useEffect(() => {
     const fetchUser = async () => {
       const token = Cookies.get('token');
-      console.log('useAuthUser: Initial token read from cookie:', token ? 'exists' : 'does NOT exist', token); // LOG 1
+      // console.log('useAuthUser: Initial token read from cookie:', token ? 'exists' : 'does NOT exist', token); // LOG 1
 
       if (!token) {
         setUser(null);
@@ -42,18 +42,15 @@ export const useAuthUser = (): UseAuthUserResult => {
       }
 
       try {
-        console.log('useAuthUser: Attempting to fetch profile...'); // LOG 2
+        // console.log('useAuthUser: Attempting to fetch profile...'); // LOG 2
         const profile = await authApi.getProfile();
-        console.log('useAuthUser: Profile fetched from API:', profile); // LOG 3
+        // console.log('useAuthUser: Profile fetched from API:', profile); // LOG 3
         
-        // --- THE CRITICAL FIX IS HERE ---
-        // Change profile.id to profile.shopkeeperId
         setUser({ shopkeeperId: profile.shopkeeperId, email: profile.email });
-        console.log('useAuthUser: User state set to:', { shopkeeperId: profile.shopkeeperId, email: profile.email });
-        // --- END CRITICAL FIX ---
+        // console.log('useAuthUser: User state set to:', { shopkeeperId: profile.shopkeeperId, email: profile.email });
 
       } catch (err: any) {
-        console.error('useAuthUser: Failed to fetch user profile:', err); // LOG 5
+        // console.error('useAuthUser: Failed to fetch user profile:', err); // LOG 5
         setError(err?.response?.data?.message || 'Failed to load user profile.');
         setUser(null);
         if (err.response?.status === 401) {

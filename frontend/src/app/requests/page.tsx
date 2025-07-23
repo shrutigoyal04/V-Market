@@ -15,11 +15,11 @@ export default function ProductRequestsPage() {
   const { user, loading: userLoading, error: userError } = useAuthUser();
   const currentShopkeeperId = user?.shopkeeperId || null;
 
-  // Logging (keep for now if still debugging)
-  console.log('Requests Page - useAuthUser loading:', userLoading);
-  console.log('Requests Page - useAuthUser error:', userError);
-  console.log('Requests Page - Authenticated User object:', user);
-  console.log('Requests Page - Derived currentShopkeeperId:', currentShopkeeperId);
+  // // Logging (keep for now if still debugging)
+  // console.log('Requests Page - useAuthUser loading:', userLoading);
+  // console.log('Requests Page - useAuthUser error:', userError);
+  // console.log('Requests Page - Authenticated User object:', user);
+  // console.log('Requests Page - Derived currentShopkeeperId:', currentShopkeeperId);
 
 
   // Memoize the fetch function for requests
@@ -86,7 +86,7 @@ export default function ProductRequestsPage() {
       ) : (
         <>
           <RequestListSection
-            title="My Outgoing Requests (initiated by me)"
+            title="My Outgoing Requests"
             emptyMessage="You have not initiated any product transfer requests."
             requests={outgoingRequests}
             type="outgoing"
@@ -96,7 +96,7 @@ export default function ProductRequestsPage() {
           />
 
           <RequestListSection
-            title="Incoming Requests (I am the requester)"
+            title="Incoming Requests"
             emptyMessage="No incoming product transfer requests."
             requests={incomingRequests}
             type="incoming"
