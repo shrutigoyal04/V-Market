@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from '../database/entities/product.entity';
@@ -72,7 +72,7 @@ export class ProductService {
     }
 
     if (product.shopkeeper.id !== shopkeeperId) {
-      throw new NotFoundException('You are not authorized to update this product.');
+      throw new ForbiddenException('You are not authorized to update this product.');
     }
 
     Object.assign(product, updateProductDto);
@@ -87,7 +87,7 @@ export class ProductService {
     }
 
     if (product.shopkeeper.id !== shopkeeperId) {
-      throw new NotFoundException('You are not authorized to delete this product.');
+      throw new ForbiddenException('You are not authorized to delete this product.');
     }
 
     await this.productsRepository.remove(product);

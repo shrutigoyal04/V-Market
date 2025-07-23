@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,6 +15,12 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
+    // Check if a shopkeeper with this email already exists
+    const existingShopkeeper = await this.shopkeeperRepository.findOne({ where: { email: registerDto.email } });
+    if (existingShopkeeper) {
+      throw new BadRequestException('Email already registered.');
+    }
+
     const shopkeeper = this.shopkeeperRepository.create(registerDto);
     await this.shopkeeperRepository.save(shopkeeper);
     return this.generateToken(shopkeeper);

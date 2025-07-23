@@ -1,28 +1,31 @@
 // frontend/src/app/requests/page.tsx
 'use client';
 
+// CONSOLIDATED IMPORTS:
+import productRequestsApi, { ProductRequestStatus, UpdateProductRequestPayload } from '@/api/product-requests.api';
+import { ProductRequest } from '@/types/product'; // Correct import path for ProductRequest
 import { useRouter } from 'next/navigation';
-import productRequestsApi, { ProductRequestData, ProductRequestStatus, UpdateProductRequestPayload } from '@/api/product-requests.api';
 import { useAuthUser } from '@/hooks/useAuthUser';
 import { useFetchData } from '@/hooks/useFetchData';
-import ProductRequestCard from '@/components/ProductRequestCard';
-import { useCallback } from 'react'; // Import useCallback
+import RequestListSection from '@/components/RequestListSection';
+import { useCallback } from 'react';
 
 export default function ProductRequestsPage() {
   const router = useRouter();
   const { user, loading: userLoading, error: userError } = useAuthUser();
   const currentShopkeeperId = user?.shopkeeperId || null;
 
-  // Add more aggressive logging
+  // Logging (keep for now if still debugging)
   console.log('Requests Page - useAuthUser loading:', userLoading);
   console.log('Requests Page - useAuthUser error:', userError);
   console.log('Requests Page - Authenticated User object:', user);
   console.log('Requests Page - Derived currentShopkeeperId:', currentShopkeeperId);
 
+
   // Memoize the fetch function for requests
   const fetchAllRequests = useCallback(
     () => productRequestsApi.getAllRequestsForShopkeeper(),
-    [] // No dependencies needed for this fetch function itself, as currentShopkeeperId is a dependency for useFetchData
+    []
   );
 
   // Use useFetchData for product requests, refetch when currentShopkeeperId changes
@@ -31,9 +34,9 @@ export default function ProductRequestsPage() {
     loading: requestsLoading,
     error: requestsError,
     refetch: refetchRequests,
-  } = useFetchData(
+  } = useFetchData<ProductRequest[]>( // Correct type argument
     fetchAllRequests,
-    [currentShopkeeperId] // Refetch when currentShopkeeperId is available/changes
+    [currentShopkeeperId]
   );
 
   const loading = userLoading || requestsLoading;
@@ -50,9 +53,9 @@ export default function ProductRequestsPage() {
       await refetchRequests();
     } catch (err: any) {
       console.error(`Failed to ${status.toLowerCase()} request:`, err);
-      alert(err?.response?.data?.message || `Failed to ${status.toLowerCase()} request.`);
+      alert(err.message || `Failed to ${status.toLowerCase()} request.`);
     }
-  }, [refetchRequests]); // Dependency on refetchRequests
+  }, [refetchRequests]);
 
   const handleCancelRequest = useCallback(async (requestId: string) => {
     if (!window.confirm('Are you sure you want to cancel this request?')) {
@@ -64,9 +67,9 @@ export default function ProductRequestsPage() {
       await refetchRequests();
     } catch (err: any) {
       console.error('Failed to cancel request:', err);
-      alert(err?.response?.data?.message || 'Failed to cancel request.');
+      alert(err.message || 'Failed to cancel request.');
     }
-  }, [refetchRequests]); // Dependency on refetchRequests
+  }, [refetchRequests]);
 
   const outgoingRequests = Array.isArray(requests) ? requests.filter(req => req.initiatorId === currentShopkeeperId) : [];
   const incomingRequests = Array.isArray(requests) ? requests.filter(req => req.requesterId === currentShopkeeperId) : [];
@@ -82,41 +85,25 @@ export default function ProductRequestsPage() {
         <p className="text-red-500">{error}</p>
       ) : (
         <>
-          {/* Outgoing Requests Section */}
-          <h2 className="text-2xl font-semibold mb-4 mt-8">My Outgoing Requests (initiated by me)</h2>
-          {outgoingRequests.length === 0 ? (
-            <p className="text-gray-500 mb-6">You have not initiated any product transfer requests.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {outgoingRequests.map(req => (
-                <ProductRequestCard
-                  key={req.id}
-                  request={req}
-                  type="outgoing"
-                  onCancelRequest={handleCancelRequest}
-                  loading={requestsLoading}
-                />
-              ))}
-            </div>
-          )}
+          <RequestListSection
+            title="My Outgoing Requests (initiated by me)"
+            emptyMessage="You have not initiated any product transfer requests."
+            requests={outgoingRequests}
+            type="outgoing"
+            currentShopkeeperId={currentShopkeeperId}
+            onCancelRequest={handleCancelRequest}
+            loading={requestsLoading}
+          />
 
-          {/* Incoming Requests Section */}
-          <h2 className="text-2xl font-semibold mb-4">Incoming Requests (I am the requester)</h2>
-          {incomingRequests.length === 0 ? (
-            <p className="text-gray-500">No incoming product transfer requests.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {incomingRequests.map(req => (
-                <ProductRequestCard
-                  key={req.id}
-                  request={req}
-                  type="incoming"
-                  onUpdateStatus={handleUpdateStatus}
-                  loading={requestsLoading}
-                />
-              ))}
-            </div>
-          )}
+          <RequestListSection
+            title="Incoming Requests (I am the requester)"
+            emptyMessage="No incoming product transfer requests."
+            requests={incomingRequests}
+            type="incoming"
+            currentShopkeeperId={currentShopkeeperId}
+            onUpdateStatus={handleUpdateStatus}
+            loading={requestsLoading}
+          />
         </>
       )}
     </div>

@@ -6,6 +6,7 @@ import { Product } from '../database/entities/product.entity';
 import { Shopkeeper } from '../database/entities/shopkeeper.entity';
 import { CreateProductRequestDto } from './dto/create-product-request.dto';
 import { UpdateProductRequestDto } from './dto/update-product-request.dto';
+import { ProductTransferHistory } from '../database/entities/product-transfer-history.entity'; // Import new entity
 
 @Injectable()
 export class ProductRequestService {
@@ -16,7 +17,9 @@ export class ProductRequestService {
     private productRepository: Repository<Product>,
     @InjectRepository(Shopkeeper)
     private shopkeeperRepository: Repository<Shopkeeper>,
-    private dataSource: DataSource, // Inject DataSource for transactions
+    @InjectRepository(ProductTransferHistory) // Inject new history repository
+    private productTransferHistoryRepository: Repository<ProductTransferHistory>,
+    private dataSource: DataSource,
   ) {}
 
   // Initiator (owner of product) makes an export request
@@ -163,6 +166,22 @@ export class ProductRequestService {
         // 3. Update request status to ACCEPTED
         request.status = ProductRequestStatus.ACCEPTED;
         const updatedRequest = await queryRunner.manager.save(request);
+
+        // 4. --- NEW: Create a history record for the transfer ---
+        const historyRecord = this.productTransferHistoryRepository.create({
+          product: request.product,
+          productId: request.product.id,
+          initiatorShopkeeper: request.initiator,
+          initiatorShopkeeperId: request.initiator.id,
+          receiverShopkeeper: request.requester,
+          receiverShopkeeperId: request.requester.id,
+          quantityTransferred: request.quantity,
+          request: updatedRequest, // Link to the accepted request
+          requestId: updatedRequest.id,
+          notes: `Product '${request.product.name}' transferred from ${request.initiator.shopName} to ${request.requester.shopName}`,
+        });
+        await queryRunner.manager.save(historyRecord);
+        // --- END NEW ---
 
         await queryRunner.commitTransaction();
         return updatedRequest;

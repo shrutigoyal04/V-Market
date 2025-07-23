@@ -1,5 +1,5 @@
 // backend/src/shopkeeper/shopkeeper.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Shopkeeper } from '../database/entities/shopkeeper.entity'; // Adjust path if needed
@@ -24,7 +24,7 @@ export class ShopkeeperService {
       select: ['id', 'email', 'shopName', 'address', 'phone', 'createdAt', 'updatedAt'],
     });
     if (!shopkeeper) {
-      throw new Error('Shopkeeper not found'); // Consider using NestJS NotFoundException
+      throw new NotFoundException('Shopkeeper not found'); // Changed to NotFoundException
     }
     return shopkeeper;
   }

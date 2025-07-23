@@ -8,15 +8,16 @@ import { Product } from '../database/entities/product.entity';
 import { Shopkeeper } from '../database/entities/shopkeeper.entity';
 import { AuthModule } from '../auth/auth.module'; // Import AuthModule for AuthGuard
 import { ConfigModule } from '@nestjs/config'; // Needed for ConfigService in AuthModule if not already in AppModule
+import { ProductTransferHistory } from '../database/entities/product-transfer-history.entity'; // Import new entity
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ProductRequest, Product, Shopkeeper]), // Register all entities used by the service
-    AuthModule, // Import AuthModule to make AuthGuard available
-    ConfigModule, // Needed for ConfigService in AuthModule if not already globally imported
+    TypeOrmModule.forFeature([ProductRequest, Product, Shopkeeper, ProductTransferHistory]), // Register new entity
+    AuthModule,
+    ConfigModule,
   ],
   controllers: [ProductRequestController],
   providers: [ProductRequestService],
-  exports: [ProductRequestService], // Export if other modules might need it
+  exports: [ProductRequestService],
 })
 export class ProductRequestModule {}

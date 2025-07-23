@@ -24,14 +24,12 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     const result = await this.authService.login(loginDto);
-    console.log('Backend Login: Token generated for user:', loginDto.email, 'with payload sub:', JSON.parse(Buffer.from(result.access_token.split('.')[1], 'base64').toString()).sub); // LOG 11
     return result;
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('profile')
   getProfile(@Req() req: AuthenticatedRequest) {
-    console.log('Backend /auth/profile: User from token (req.user):', req.user); // LOG 12
     return req.user; // Return only the user data from token for profile
   }
 }
