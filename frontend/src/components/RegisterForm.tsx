@@ -32,11 +32,6 @@ const RegisterForm: React.FC = () => {
         phone: phone || undefined,
       });
 
-      // --- IMPORTANT CHANGE HERE ---
-      // 1. Remove the line that sets the cookie:
-      // Cookies.set('token', access_token, { expires: 7, secure: process.env.NODE_ENV === 'production' });
-
-      // 2. Redirect to the login page
       alert('Registration successful! Please log in with your new credentials.'); // Optional: provide feedback
       router.push('/login');
       // --- END IMPORTANT CHANGE ---

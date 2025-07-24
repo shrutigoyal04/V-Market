@@ -40,7 +40,7 @@ export class ProductRequestService {
     if (product.quantity < quantity) {
       throw new BadRequestException('Requested quantity exceeds available stock.');
     }
-
+    
     // 2. Verify requester exists and is not the initiator
     const requester = await this.shopkeeperRepository.findOneBy({ id: requesterId });
     if (!requester) {
@@ -65,9 +65,6 @@ export class ProductRequestService {
     return this.productRequestRepository.save(productRequest);
   }
 
-  // Requester (target shopkeeper) makes an import request (similar to createExportRequest, but semantic difference)
-  // This could also be a separate endpoint, but for now, it's covered by createExportRequest
-  // as the initiating shopkeeper is always the product owner.
 
   async findAllRequestsForShopkeeper(shopkeeperId: string): Promise<ProductRequest[]> {
     return this.productRequestRepository.find({
@@ -114,14 +111,10 @@ export class ProductRequestService {
       throw new NotFoundException(`Product request with ID "${requestId}" not found.`);
     }
 
-    // --- CRITICAL FIX HERE: Change authorization logic ---
-    // A request can be accepted/rejected ONLY by the requester
-    // A request can be CANCELLED by the initiator (handled in removeRequest or a separate status)
-    // Here, for ACCEPTED/REJECTED, only the requester can perform it.
+   
     if (request.requester.id !== currentShopkeeperId) {
       throw new ForbiddenException('You are not authorized to accept or reject this request.');
-    }
-    // --- END CRITICAL FIX ---
+    } 
 
     if (request.status !== ProductRequestStatus.PENDING) {
       throw new BadRequestException(`Request is already ${request.status}. Cannot change status.`);

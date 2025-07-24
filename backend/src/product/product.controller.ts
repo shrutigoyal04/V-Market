@@ -33,7 +33,6 @@ export class ProductController {
   async findMyProducts(@Req() req: AuthenticatedRequest) {
     const shopkeeperId = req.user.shopkeeperId;
     const products = await this.productService.findByShopkeeperId(shopkeeperId);
-    // THIS IS THE CRITICAL LINE: Ensure it returns an object with shopkeeperId and products
     return { shopkeeperId, products };
   }
 
@@ -42,8 +41,7 @@ export class ProductController {
     return this.productService.findOne(id);
   }
 
-  // NEW PUBLIC ENDPOINT: Get products for a specific shopkeeper (public view)
-  @Get('shop/:shopkeeperId') // Example: GET /products/shop/some-shopkeeper-uuid
+  @Get('shop/:shopkeeperId')
   findShopkeeperProductsPublic(@Param('shopkeeperId') shopkeeperId: string) {
     return this.productService.findProductsByShopkeeperIdPublic(shopkeeperId);
   }
