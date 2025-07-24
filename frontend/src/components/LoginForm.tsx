@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import authApi from '@/api/auth.api';
 import Cookies from 'js-cookie';
 import { useForm } from 'react-hook-form';
-import Link from 'next/link'; // Import Link for navigation to register
+import Link from 'next/link';
 
 const LoginForm: React.FC = () => {
   const router = useRouter();

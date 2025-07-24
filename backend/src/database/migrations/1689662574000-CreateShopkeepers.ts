@@ -1,60 +1,26 @@
-import { MigrationInterface, QueryRunner, Table } from "typeorm";
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class CreateShopkeepers1689662574000 implements MigrationInterface {
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // Add uuid-ossp extension for UUID generation
-        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+    name = 'CreateShopkeepers1689662574000'
 
-        await queryRunner.createTable(
-            new Table({
-                name: "shopkeepers",
-                columns: [
-                    {
-                        name: "id",
-                        type: "uuid",
-                        isPrimary: true,
-                        generationStrategy: "uuid",
-                        default: "uuid_generate_v4()",
-                    },
-                    {
-                        name: "email",
-                        type: "varchar",
-                        isUnique: true,
-                    },
-                    {
-                        name: "password",
-                        type: "varchar",
-                    },
-                    {
-                        name: "shopName",
-                        type: "varchar",
-                    },
-                    {
-                        name: "address",
-                        type: "varchar",
-                    },
-                    {
-                        name: "phone",
-                        type: "varchar",
-                        isNullable: true,
-                    },
-                    {
-                        name: "created_at",
-                        type: "timestamp",
-                        default: "CURRENT_TIMESTAMP",
-                    },
-                    {
-                        name: "updated_at",
-                        type: "timestamp",
-                        default: "CURRENT_TIMESTAMP",
-                    },
-                ],
-            }),
-            true
-        );
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+        await queryRunner.query(`
+            CREATE TABLE "shopkeepers" (
+                "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+                "email" varchar NOT NULL UNIQUE,
+                "password" varchar NOT NULL,
+                "shopName" varchar NOT NULL,
+                "address" varchar NOT NULL,
+                "phone" varchar, -- isNullable is implied by not having NOT NULL
+                "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+                "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
+                CONSTRAINT "PK_c626e2e5c8e3b3e32b8e3a2c204" PRIMARY KEY ("id")
+            )
+        `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.dropTable("shopkeepers");
+        await queryRunner.query(`DROP TABLE "shopkeepers"`);
     }
 }

@@ -58,7 +58,7 @@ export default function ShopkeeperDashboardPage() {
       ) : error ? (
         <div className="text-red-600 text-center py-20">
           <p className="text-xl font-medium mb-2">Error loading products:</p>
-          <p>{error.message}</p> {/* Access error.message directly */}
+          <p>{error}</p> 
         </div>
       ) : (
         <>
