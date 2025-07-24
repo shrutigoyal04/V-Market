@@ -1,38 +1,41 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import productsApi from '@/api/products.api';
-import { useProductForm } from '@/hooks/useProductForm'; // Import the custom hook
-import ProductForm from '@/components/ProductForm'; // Import the new component
+import ProductForm from '@/components/ProductForm';
+import { CreateProductDto, UpdateProductDto } from '@/types/product'; // Import UpdateProductDto as well
 
 export default function NewProductPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleCreateProduct = async (data: any) => { // data will be ProductFormData
-    await productsApi.create({
-      name: data.name,
-      price: parseFloat(data.price),
-      description: data.description,
-      quantity: parseInt(data.quantity),
-      imageUrl: data.imageUrl || undefined,
-    });
-    router.push('/dashboard'); // Redirect to dashboard after creation
+  // Define the onSubmit handler for creating a new product
+  // It now accepts the union type to satisfy ProductForm's onSubmit prop
+  const handleCreateProduct = async (data: CreateProductDto | UpdateProductDto) => {
+    setLoading(true);
+    setApiError(null);
+    try {
+      // Cast data to CreateProductDto when calling productsApi.create
+      await productsApi.create(data as CreateProductDto);
+      router.push('/dashboard');
+    } catch (err: any) {
+      console.error('Failed to create product:', err);
+      setApiError(err?.message || 'Something went wrong during product creation.');
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const { formData, handleChange, handleSubmit, loading, error } = useProductForm({
-    onSubmit: handleCreateProduct,
-    redirectPath: '/dashboard', // The hook won't redirect, the component will.
-  });
 
   return (
     <ProductForm
       title="Add New Product"
       buttonText="Create Product"
-      formData={formData}
-      handleChange={handleChange}
-      handleSubmit={handleSubmit}
+      onSubmit={handleCreateProduct}
       loading={loading}
-      error={error}
+      apiError={apiError}
+      // No defaultValues needed for new product creation
     />
   );
 }

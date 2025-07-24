@@ -3,99 +3,82 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import productsApi from '@/api/products.api';
-import { useProductForm } from '@/hooks/useProductForm'; // Import the custom hook
 import ProductForm from '@/components/ProductForm'; // Import the new component
-import { Product } from '@/types/product'; // Import Product type for initial fetch
+import { Product, UpdateProductDto } from '@/types/product'; // Import Product type for initial fetch and UpdateProductDto
 
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params?.id as string;
 
+  const [productData, setProductData] = useState<Partial<Product> | null>(null); // State to hold fetched product data for default values
   const [initialLoading, setInitialLoading] = useState(true);
-
-  // Initialize useProductForm with an empty onSubmit for now, will redefine it
-  const {
-    formData,
-    handleChange,
-    handleSubmit,
-    loading,
-    error,
-    setFormData, // Need to expose setFormData to populate from fetched data
-    setLoading, // Need to expose setLoading for initial fetch
-    setError, // Need to expose setError for initial fetch
-  } = useProductForm({ onSubmit: async () => {}, redirectPath: '/dashboard' }); // Provide a dummy onSubmit initially
+  const [apiError, setApiError] = useState<string | null>(null); // State for API errors in this page
+  const [isSubmitting, setIsSubmitting] = useState(false); // State to manage form submission loading
 
   // Fetch product data on mount
   useEffect(() => {
     const fetchProduct = async () => {
       if (!productId) {
-        setError('Product ID is missing.');
+        setApiError('Product ID is missing.');
         setInitialLoading(false);
         return;
       }
       try {
-        setLoading(true); // Set hook's loading state for initial fetch
+        setInitialLoading(true);
         const product: Product = await productsApi.getById(productId);
-        setFormData({
-          name: product.name,
-          price: product.price.toString(),
-          description: product.description || '', // Ensure it's a string
-          quantity: product.quantity.toString(),
-          imageUrl: product.imageUrl || '',
-        });
-        setError(null); // Clear any previous errors
+        setProductData(product); // Set the fetched product as default values for the form
+        setApiError(null); // Clear any previous errors
       } catch (err: any) {
         console.error('Failed to load product details:', err);
-        setError('Failed to load product details.');
+        setApiError(err?.message || 'Failed to load product details.'); // Use err.message from new Error
       } finally {
-        setLoading(false); // Set hook's loading state back to false
         setInitialLoading(false);
       }
     };
 
     fetchProduct();
-  }, [productId, setFormData, setLoading, setError]); // Add setFormData, setLoading, setError to dependencies
+  }, [productId]);
 
-  // Define the actual onSubmit handler for updating the product
-  const handleUpdateProduct = async (data: any) => { // data will be ProductFormData
-    await productsApi.update(productId, {
-      name: data.name,
-      price: parseFloat(data.price),
-      description: data.description || undefined,
-      quantity: parseInt(data.quantity),
-      imageUrl: data.imageUrl || undefined,
-    });
-    router.push('/dashboard'); // Redirect to dashboard after update
-  };
-
-  // Override the handleSubmit from the hook with the actual update logic
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true); // Use hook's setLoading
-    setError(null); // Use hook's setError
+  // Define the actual onSubmit handler for updating the product,
+  // this function will be passed to ProductForm
+  const handleUpdateProduct = async (data: UpdateProductDto) => {
+    setIsSubmitting(true);
+    setApiError(null); // Clear previous API errors on new submission
     try {
-      await handleUpdateProduct(formData);
+      await productsApi.update(productId, data); // Directly use data from react-hook-form
+      router.push('/dashboard'); // Redirect to dashboard after update
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Something went wrong.');
+      console.error('Failed to update product:', err);
+      setApiError(err?.message || 'Something went wrong during update.'); // Use err.message
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
+  if (initialLoading) {
+    return <p className="text-center mt-10">Loading product for edit...</p>;
+  }
 
-  if (initialLoading) return <p className="text-center mt-10">Loading product for edit...</p>;
+  if (apiError && !productData) { // Display error if failed to load initial product and no data
+    return (
+      <div className="text-red-600 text-center py-8">
+        <p>Error: {apiError}</p>
+      </div>
+    );
+  }
 
-
-  return (
+  // Render ProductForm only if productData is available
+  return productData ? (
     <ProductForm
       title="Edit Product"
       buttonText="Update Product"
-      formData={formData}
-      handleChange={handleChange}
-      handleSubmit={handleFormSubmit} // Use the local handleFormSubmit
-      loading={loading}
-      error={error}
+      onSubmit={handleUpdateProduct} // Pass the onSubmit handler
+      loading={isSubmitting} // Pass the loading state for submission
+      apiError={apiError} // Pass the API error state
+      defaultValues={productData} // Pass the fetched product data as default values
     />
+  ) : (
+    <p className="text-center mt-10 text-gray-500">No product data available for editing.</p>
   );
 }

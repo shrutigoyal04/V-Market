@@ -1,13 +1,7 @@
 import axios from '../lib/axios'; // this uses your configured axiosInstance
-import { Product } from '@/types/product'; // Assuming Product interface is available
+import { Product, CreateProductDto, UpdateProductDto } from '@/types/product'; // Import Product interface and DTOs
 
-interface ProductData {
-  name: string;
-  price: number;
-  description: string;
-  quantity: number;
-  imageUrl?: string;
-}
+// Removed local ProductData interface as we'll use DTOs from types/product.ts
 
 interface ShopkeeperProductsResponse {
   shopkeeperId: string;
@@ -17,7 +11,7 @@ interface ShopkeeperProductsResponse {
 
 const productsApi = {
   // Create a new product
-  create: async (data: ProductData) => {
+  create: async (data: CreateProductDto) => { // Use CreateProductDto
     const response = await axios.post('/products', data);
     return response.data;
   },
@@ -47,7 +41,7 @@ const productsApi = {
   },
 
   // Update product
-  update: async (productId: string, data: Partial<ProductData>) => {
+  update: async (productId: string, data: UpdateProductDto) => { // Use UpdateProductDto
     const response = await axios.patch(`/products/${productId}`, data);
     return response.data;
   },
