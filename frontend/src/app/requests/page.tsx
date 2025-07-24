@@ -76,13 +76,20 @@ export default function ProductRequestsPage() {
 
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Product Transfer Requests</h1>
+    <div className="container mx-auto p-6 md:p-10 bg-gray-50 min-h-[calc(100vh-80px)] rounded-xl shadow-inner"> {/* Enhanced outer container */}
+      {/* Page Header Section */}
+      <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
+        <h1 className="text-4xl font-extrabold text-gray-900">Product Transfer Requests</h1>
+      </div>
 
+      {/* Loading, Error States */}
       {loading ? (
-        <p className="text-gray-600">Loading requests...</p>
+        <p className="text-center text-gray-600 text-xl py-20">Loading requests...</p>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
+        <div className="text-red-600 text-center py-20">
+          <p className="text-xl font-medium mb-2">Error loading requests:</p>
+          <p>{error}</p> {/* Use error directly as per previous preference */}
+        </div>
       ) : (
         <>
           <RequestListSection
@@ -92,7 +99,7 @@ export default function ProductRequestsPage() {
             type="outgoing"
             currentShopkeeperId={currentShopkeeperId}
             onCancelRequest={handleCancelRequest}
-            loading={requestsLoading}
+            loading={requestsLoading} // Pass requestsLoading to sub-section
           />
 
           <RequestListSection
@@ -102,7 +109,7 @@ export default function ProductRequestsPage() {
             type="incoming"
             currentShopkeeperId={currentShopkeeperId}
             onUpdateStatus={handleUpdateStatus}
-            loading={requestsLoading}
+            loading={requestsLoading} // Pass requestsLoading to sub-section
           />
         </>
       )}

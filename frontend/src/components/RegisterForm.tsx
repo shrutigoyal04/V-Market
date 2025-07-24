@@ -41,16 +41,17 @@ const RegisterForm: React.FC = () => {
       alert('Registration successful! Please log in with your new credentials.'); // Optional: provide feedback
       router.push('/login');
     } catch (err: any) {
-      setApiError(err.response?.data?.message || 'Registration failed'); // Using apiError for server-side errors
+      setApiError(err.message || 'Registration failed'); // Using apiError for server-side errors
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md w-full space-y-8">
+    // Enhanced outer container for a card-like appearance
+    <div className="max-w-md w-full p-8 space-y-8 bg-white rounded-xl shadow-lg border border-gray-200">
       <div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
           Register your shop
         </h2>
       </div>
@@ -60,13 +61,14 @@ const RegisterForm: React.FC = () => {
             <div className="text-sm text-red-700">{apiError}</div>
           </div>
         )}
-        <div className="rounded-md shadow-sm -space-y-px">
+        <div className="space-y-4"> {/* Changed from -space-y-px for better spacing between fields */}
           <div>
+            <label htmlFor="email" className="sr-only">Email address</label>
             <input
               id="email"
               type="email"
               autoComplete="email"
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Email address"
               {...register('email', {
                 required: 'Email is required',
@@ -81,11 +83,12 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
           <div>
+            <label htmlFor="password" className="sr-only">Password</label>
             <input
               id="password"
               type="password"
               autoComplete="new-password"
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Password"
               {...register('password', {
                 required: 'Password is required',
@@ -100,11 +103,12 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
           <div>
+            <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
             <input
               id="confirmPassword"
               type="password"
               autoComplete="new-password"
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Confirm Password"
               {...register('confirmPassword', {
                 required: 'Confirm Password is required',
@@ -117,11 +121,12 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
           <div>
+            <label htmlFor="shopName" className="sr-only">Shop Name</label>
             <input
               id="shopName"
               type="text"
               autoComplete="organization"
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Shop Name"
               {...register('shopName', {
                 required: 'Shop Name is required',
@@ -136,11 +141,12 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
           <div>
+            <label htmlFor="address" className="sr-only">Shop Address</label>
             <input
               id="address"
               type="text"
               autoComplete="street-address"
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Shop Address"
               {...register('address', {
                 required: 'Address is required',
@@ -155,11 +161,12 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
           <div>
+            <label htmlFor="phone" className="sr-only">Phone (Optional)</label>
             <input
               id="phone"
               type="tel"
               autoComplete="tel"
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Phone (Optional)"
               {...register('phone', {
                 pattern: {
@@ -178,18 +185,19 @@ const RegisterForm: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-lg font-medium rounded-md text-white bg-indigo-700 hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Registering...' : 'Register'}
           </button>
         </div>
-        <div className="text-center text-sm mt-4">
-          Already have an account?{' '}
-          <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-            Sign in
-          </Link>
-        </div>
       </form>
+      {/* Moved the sign-in link here, similar to LoginForm */}
+      <div className="text-center text-sm mt-4">
+        Already have an account?{' '}
+        <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+          Sign in
+        </Link>
+      </div>
     </div>
   );
 };

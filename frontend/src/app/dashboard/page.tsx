@@ -2,18 +2,17 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useProductManagement } from '@/hooks/useProductManagement'; // Import custom hook
-import { useProductTransfer } from '@/hooks/useProductTransfer'; // Import custom hook
-import ProductCard from '@/components/ProductCard'; // Import ProductCard component
-import ProductTransferModal from '@/components/ProductTransferModal'; // Import ProductTransferModal component
+import { useProductManagement } from '@/hooks/useProductManagement';
+import { useProductTransfer } from '@/hooks/useProductTransfer';
+import ProductCard from '@/components/ProductCard';
+import ProductTransferModal from '@/components/ProductTransferModal';
+import { Product } from '@/types/product'; // Import Product for type safety if not already there
 
 export default function ShopkeeperDashboardPage() {
   const router = useRouter();
 
-  // Use product management hook
   const { products, loading, error, currentShopkeeperId, fetchProducts, handleDeleteProduct } = useProductManagement();
 
-  // Use product transfer hook
   const {
     showTransferModal,
     selectedProductForTransfer,
@@ -27,7 +26,7 @@ export default function ShopkeeperDashboardPage() {
     handleCloseTransferModal,
     setTransferQuantity,
     setTargetShopkeeperId,
-  } = useProductTransfer(currentShopkeeperId, fetchProducts); // Pass fetchProducts as success callback
+  } = useProductTransfer(currentShopkeeperId, fetchProducts);
 
   const handleAddNewProduct = () => {
     router.push('/products/new');
@@ -38,27 +37,39 @@ export default function ShopkeeperDashboardPage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Shopkeeper Dashboard</h1>
+    <div className="container mx-auto p-6 md:p-10 bg-gray-50 min-h-[calc(100vh-80px)] rounded-xl shadow-inner"> {/* Enhanced outer container */}
+      {/* Dashboard Header Section */}
+      <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
+        <h1 className="text-4xl font-extrabold text-gray-900">Your Products</h1>
+        <button
+          onClick={handleAddNewProduct}
+          className="px-6 py-3 bg-indigo-700 text-white rounded-lg shadow-md hover:bg-indigo-800 transition duration-200 text-lg font-medium flex items-center space-x-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          <span>Add New Product</span>
+        </button>
+      </div>
 
-      <button
-        onClick={handleAddNewProduct}
-        className="mb-6 px-6 py-3 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
-      >
-        Add New Product
-      </button>
-
+      {/* Loading, Error, and Empty States */}
       {loading ? (
-        <p className="text-gray-600">Loading your products...</p>
+        <p className="text-center text-gray-600 text-xl py-20">Loading your products...</p>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
+        <div className="text-red-600 text-center py-20">
+          <p className="text-xl font-medium mb-2">Error loading products:</p>
+          <p>{error.message}</p> {/* Access error.message directly */}
+        </div>
       ) : (
         <>
           {Array.isArray(products) && products.length === 0 ? (
-            <p className="text-gray-500">You have no products listed. Click "Add New Product" to get started!</p>
+            <div className="text-center py-20 bg-white rounded-lg shadow-sm border border-gray-100">
+              <p className="text-gray-500 text-xl mb-4">You have no products listed yet.</p>
+              <p className="text-gray-600">Click "Add New Product" to get started!</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.isArray(products) && products.map((product) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"> {/* Increased gap and added xl column */}
+              {Array.isArray(products) && products.map((product: Product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -73,6 +84,7 @@ export default function ShopkeeperDashboardPage() {
         </>
       )}
 
+      {/* Product Transfer Modal */}
       <ProductTransferModal
         show={showTransferModal}
         product={selectedProductForTransfer}
