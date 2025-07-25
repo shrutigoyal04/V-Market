@@ -11,21 +11,20 @@ interface UseProductTransferResult {
   showTransferModal: boolean;
   selectedProductForTransfer: Product | null;
   otherShopkeepers: ShopkeeperData[];
-  transferQuantity: number;
-  targetShopkeeperId: string;
   transferError: string | null;
   transferLoading: boolean;
   handleInitiateTransfer: (product: Product) => void;
-  handleSendTransferRequest: () => Promise<void>;
+  // Updated signature to accept data directly from the modal's internal form
+  handleSendTransferRequest: (data: { quantity: number; targetShopkeeperId: string }) => Promise<void>;
   handleCloseTransferModal: () => void;
-  setTransferQuantity: (quantity: number) => void;
-  setTargetShopkeeperId: (id: string) => void;
+  // Removed transferQuantity, targetShopkeeperId, setTransferQuantity, setTargetShopkeeperId
 }
 
 export const useProductTransfer = (currentShopkeeperId: string | null, onTransferSuccess?: () => void): UseProductTransferResult => {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [selectedProductForTransfer, setSelectedProductForTransfer] = useState<Product | null>(null);
   const [otherShopkeepers, setOtherShopkeepers] = useState<ShopkeeperData[]>([]);
+  // These states are now primarily for initial values when opening the modal
   const [transferQuantity, setTransferQuantity] = useState<number>(1);
   const [targetShopkeeperId, setTargetShopkeeperId] = useState<string>('');
   const [transferError, setTransferError] = useState<string | null>(null);
@@ -55,8 +54,8 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
 
   const handleInitiateTransfer = useCallback((product: Product) => {
     setSelectedProductForTransfer(product);
-    setTransferQuantity(1);
-    setTargetShopkeeperId('');
+    setTransferQuantity(1); // Set initial quantity for modal's default
+    setTargetShopkeeperId(''); // Set initial target for modal's default
     setTransferError(null);
     setShowTransferModal(true);
   }, []);
@@ -66,15 +65,14 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
     setSelectedProductForTransfer(null);
   }, []);
 
-  const handleSendTransferRequest = useCallback(async () => {
-    if (!selectedProductForTransfer || !targetShopkeeperId || transferQuantity <= 0) {
-      setTransferError('Please select a product, target shopkeeper, and valid quantity.');
+  // Updated signature to accept quantity and targetShopkeeperId from the modal
+  const handleSendTransferRequest = useCallback(async (data: { quantity: number; targetShopkeeperId: string }) => {
+    if (!selectedProductForTransfer) {
+      setTransferError('No product selected for transfer.');
       return;
     }
-    if (transferQuantity > selectedProductForTransfer.quantity) {
-      setTransferError('Quantity requested exceeds available stock.');
-      return;
-    }
+    // Zod in the modal now handles quantity and targetShopkeeperId validation,
+    // so we don't need redundant checks here.
 
     setTransferLoading(true);
     setTransferError(null);
@@ -82,8 +80,8 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
     // console.log('useProductTransfer: Sending request with Initiator ID (from currentShopkeeperId):', currentShopkeeperId); // LOG 10
     const payload: CreateProductRequestPayload = {
       productId: selectedProductForTransfer.id,
-      requesterId: targetShopkeeperId,
-      quantity: transferQuantity,
+      requesterId: data.targetShopkeeperId, // Use data from modal
+      quantity: data.quantity, // Use data from modal
     };
 
     try {
@@ -97,20 +95,17 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
     } finally {
       setTransferLoading(false);
     }
-  }, [selectedProductForTransfer, targetShopkeeperId, transferQuantity, handleCloseTransferModal, onTransferSuccess, currentShopkeeperId]); // Add currentShopkeeperId to deps
+  }, [selectedProductForTransfer, handleCloseTransferModal, onTransferSuccess, currentShopkeeperId]);
 
   return {
     showTransferModal,
     selectedProductForTransfer,
     otherShopkeepers,
-    transferQuantity,
-    targetShopkeeperId,
     transferError,
     transferLoading,
     handleInitiateTransfer,
     handleSendTransferRequest,
     handleCloseTransferModal,
-    setTransferQuantity,
-    setTargetShopkeeperId,
+    // Removed transferQuantity, targetShopkeeperId, setTransferQuantity, setTargetShopkeeperId from return
   };
 };

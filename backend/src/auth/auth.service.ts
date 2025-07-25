@@ -39,7 +39,7 @@ export class AuthService {
   }
 
   private generateToken(shopkeeper: Shopkeeper) {
-    const payload = { sub: shopkeeper.id, email: shopkeeper.email };
+    const payload = { sub: shopkeeper.id, email: shopkeeper.email, shopName: shopkeeper.shopName }; // Added shopName
     return {
       access_token: this.jwtService.sign(payload),
     };

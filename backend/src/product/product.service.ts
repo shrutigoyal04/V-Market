@@ -30,7 +30,12 @@ export class ProductService {
   }
 
   async findAll(): Promise<Product[]> {
-    return this.productsRepository.find({ relations: ['shopkeeper'] });
+    return this.productsRepository.find({
+      relations: ['shopkeeper'],
+      order: {
+        createdAt: 'DESC', // Sort by createdAt in descending order
+      },
+    });
   }
 
   // New method to find products by shopkeeper ID

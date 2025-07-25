@@ -54,7 +54,7 @@ const Navbar: React.FC = () => {
                 All Shops
               </Link> {/* Added "All Shops" link for logged-in users */}
               <span className="text-indigo-100 text-sm italic">
-                Welcome, {user.email}!
+                Welcome to {user.shopName}! {/* Changed from user.email to user.shopName */}
               </span>
               <button
                 onClick={handleLogout}

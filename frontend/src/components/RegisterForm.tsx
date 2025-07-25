@@ -3,33 +3,50 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import authApi from '@/api/auth.api';
-import { useForm } from 'react-hook-form'; // Import useForm
-import Link from 'next/link'; // Import Link for navigation to login
+import { useForm } from 'react-hook-form';
+import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod'; // Import zodResolver
+import { z } from 'zod'; // Import z from zod
+import Cookies from 'js-cookie'; // Import Cookies
+
+// Define the Zod schema for registration form validation
+const registerSchema = z.object({
+  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters').min(1, 'Password is required'),
+  confirmPassword: z.string().min(1, 'Confirm Password is required'),
+  shopName: z.string().min(3, 'Shop Name must be at least 3 characters').min(1, 'Shop Name is required'),
+  address: z.string().min(5, 'Address must be at least 5 characters').min(1, 'Address is required'),
+  phone: z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number format').optional().or(z.literal('')), // Optional phone number with regex, allows empty string
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'], // Path of the error
+});
+
+// Infer the type from the schema
+type RegisterFormInputs = z.infer<typeof registerSchema>;
 
 const RegisterForm: React.FC = () => {
   const router = useRouter();
-  const [apiError, setApiError] = useState(''); // Renamed to avoid conflict with react-hook-form 'errors'
+  const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Initialize useForm
   const {
     register,
     handleSubmit,
-    formState: { errors }, // Destructure errors from formState
-    watch // To watch password for confirmation validation
-  } = useForm();
+    formState: { errors },
+  } = useForm<RegisterFormInputs>({ // Specify the type for useForm
+    resolver: zodResolver(registerSchema), // Integrate Zod resolver
+  });
 
-  const password = watch('password'); // Watch password field for confirmation
 
-  // Modified handleSubmit function to use react-hook-form's handleSubmit
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: RegisterFormInputs) => {
     setApiError('');
     setLoading(true);
 
-    const { email, password, shopName, address, phone } = data; // Data is now directly from react-hook-form
+    const { email, password, shopName, address, phone } = data;
 
     try {
-      // We still call register API to create the user on backend
+      // 1. Register the user
       await authApi.register({
         email,
         password,
@@ -38,10 +55,20 @@ const RegisterForm: React.FC = () => {
         phone: phone || undefined,
       });
 
-      alert('Registration successful! Please log in with your new credentials.'); // Optional: provide feedback
-      router.push('/login');
+      // 2. Automatically log in the user after successful registration
+      const { access_token } = await authApi.login({ email, password });
+
+      // 3. Store the token
+      Cookies.set('token', access_token, { expires: 7, secure: process.env.NODE_ENV === 'production' });
+
+      // 4. Redirect to the dashboard
+      router.push('/dashboard');
+
+      // Removed alert message as redirection is immediate
+      // alert('Registration successful! Please log in with your new credentials.');
+      // router.push('/login'); // This line will be removed
     } catch (err: any) {
-      setApiError(err.message || 'Registration failed'); // Using apiError for server-side errors
+      setApiError(err.message || 'Registration failed. Please try again.'); // Updated error message for clarity
     } finally {
       setLoading(false);
     }
@@ -63,117 +90,84 @@ const RegisterForm: React.FC = () => {
         )}
         <div className="space-y-4"> {/* Changed from -space-y-px for better spacing between fields */}
           <div>
-            <label htmlFor="email" className="sr-only">Email address</label>
+            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">Email address:</label> {/* Changed label */}
             <input
               id="email"
               type="email"
               autoComplete="email"
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Email address"
-              {...register('email', {
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
-                  message: 'Invalid email address',
-                },
-              })}
+              // Removed placeholder
+              {...register('email')}
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email.message as string}</p>
             )}
           </div>
           <div>
-            <label htmlFor="password" className="sr-only">Password</label>
+            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">Password:</label> {/* Changed label */}
             <input
               id="password"
               type="password"
               autoComplete="new-password"
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Password"
-              {...register('password', {
-                required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters',
-                },
-              })}
+              // Removed placeholder
+              {...register('password')}
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password.message as string}</p>
             )}
           </div>
           <div>
-            <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
+            <label htmlFor="confirmPassword" className="block text-gray-700 text-sm font-bold mb-2">Confirm Password:</label> {/* Changed label */}
             <input
               id="confirmPassword"
               type="password"
               autoComplete="new-password"
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Confirm Password"
-              {...register('confirmPassword', {
-                required: 'Confirm Password is required',
-                validate: (value) =>
-                  value === password || 'Passwords do not match',
-              })}
+              // Removed placeholder
+              {...register('confirmPassword')}
             />
             {errors.confirmPassword && (
               <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message as string}</p>
             )}
           </div>
           <div>
-            <label htmlFor="shopName" className="sr-only">Shop Name</label>
+            <label htmlFor="shopName" className="block text-gray-700 text-sm font-bold mb-2">Shop Name:</label> {/* Changed label */}
             <input
               id="shopName"
               type="text"
               autoComplete="organization"
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Shop Name"
-              {...register('shopName', {
-                required: 'Shop Name is required',
-                minLength: {
-                  value: 3,
-                  message: 'Shop Name must be at least 3 characters',
-                },
-              })}
+              // Removed placeholder
+              {...register('shopName')}
             />
             {errors.shopName && (
               <p className="mt-1 text-sm text-red-600">{errors.shopName.message as string}</p>
             )}
           </div>
           <div>
-            <label htmlFor="address" className="sr-only">Shop Address</label>
+            <label htmlFor="address" className="block text-gray-700 text-sm font-bold mb-2">Shop Address:</label> {/* Changed label */}
             <input
               id="address"
               type="text"
               autoComplete="street-address"
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Shop Address"
-              {...register('address', {
-                required: 'Address is required',
-                minLength: {
-                  value: 5,
-                  message: 'Address must be at least 5 characters',
-                },
-              })}
+              // Removed placeholder
+              {...register('address')}
             />
             {errors.address && (
               <p className="mt-1 text-sm text-red-600">{errors.address.message as string}</p>
             )}
           </div>
           <div>
-            <label htmlFor="phone" className="sr-only">Phone (Optional)</label>
+            <label htmlFor="phone" className="block text-gray-700 text-sm font-bold mb-2">Phone (optional):</label> {/* Changed label and added (optional) */}
             <input
               id="phone"
               type="tel"
               autoComplete="tel"
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Phone (Optional)"
-              {...register('phone', {
-                pattern: {
-                  value: /^\+?[0-9]{10,15}$/, // Basic phone number regex
-                  message: 'Invalid phone number format',
-                },
-              })}
+              // Removed placeholder
+              {...register('phone')}
             />
             {errors.phone && (
               <p className="mt-1 text-sm text-red-600">{errors.phone.message as string}</p>

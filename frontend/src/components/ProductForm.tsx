@@ -1,17 +1,35 @@
 import React from 'react';
-import { useForm } from 'react-hook-form'; // Import useForm
-import { CreateProductDto, UpdateProductDto, Product } from '@/types/product'; // Import DTOs and Product interface
+import { useForm } from 'react-hook-form';
+import { CreateProductDto, UpdateProductDto, Product } from '@/types/product';
+import { zodResolver } from '@hookform/resolvers/zod'; // Import zodResolver
+import { z } from 'zod'; // Import z from zod
 
 interface ProductFormProps {
-  // `onSubmit` will now receive data validated by react-hook-form
-  // It can be for creation (CreateProductDto) or update (UpdateProductDto)
   onSubmit: (data: CreateProductDto | UpdateProductDto) => Promise<void>;
   loading: boolean;
-  apiError: string | null; // Renamed from 'error' to 'apiError' for clarity
+  apiError: string | null;
   buttonText: string;
   title: string;
-  defaultValues?: Partial<Product>; // Optional default values for editing
+  defaultValues?: Partial<Product>;
 }
+
+// Define the Zod schema for product form validation
+const productSchema = z.object({
+  name: z.string().min(3, 'Product name must be at least 3 characters').min(1, 'Product name is required'),
+  price: z.preprocess(
+    (val) => Number(val), // Preprocess to convert to number
+    z.number().min(0.01, 'Price must be greater than 0').refine((val) => !isNaN(val), 'Price must be a number')
+  ),
+  description: z.string().max(500, 'Description cannot exceed 500 characters').optional().or(z.literal('')),
+  quantity: z.preprocess(
+    (val) => Number(val), // Preprocess to convert to number
+    z.number().int('Quantity must be an integer').min(1, 'Quantity must be at least 1').refine((val) => !isNaN(val), 'Quantity must be a number')
+  ),
+  imageUrl: z.string().url('Invalid URL format').optional().or(z.literal('')), // Optional URL, allows empty string
+});
+
+// Infer the type for the form inputs
+type ProductFormInputs = z.infer<typeof productSchema>;
 
 const ProductForm: React.FC<ProductFormProps> = ({
   onSubmit,
@@ -19,15 +37,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
   apiError,
   buttonText,
   title,
-  defaultValues, // Destructure defaultValues
+  defaultValues,
 }) => {
-  // Initialize useForm with default values for editing
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset // To reset form or set new default values
-  } = useForm<CreateProductDto | UpdateProductDto>({
+    reset
+  } = useForm<ProductFormInputs>({ // Use ProductFormInputs type
+    resolver: zodResolver(productSchema), // Integrate Zod resolver
     defaultValues: {
       name: defaultValues?.name || '',
       description: defaultValues?.description || '',
@@ -37,34 +55,24 @@ const ProductForm: React.FC<ProductFormProps> = ({
     },
   });
 
-  // Ensure price and quantity are numbers before passing to onSubmit
-  const handleFormSubmit = async (data: any) => {
-    const parsedData: CreateProductDto | UpdateProductDto = {
-      ...data,
-      price: parseFloat(data.price),
-      quantity: parseInt(data.quantity, 10),
-    };
-    await onSubmit(parsedData);
+  const handleFormSubmit = async (data: ProductFormInputs) => { // Data is now already parsed by Zod
+    // Zod's preprocess and refine handle type conversion and validation,
+    // so explicit parsing with parseFloat and parseInt is no longer needed here.
+    await onSubmit(data as CreateProductDto | UpdateProductDto);
   };
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-4 border rounded shadow">
       <h1 className="text-2xl font-bold mb-4">{title}</h1>
-      {apiError && <p className="text-red-500 mb-2">{apiError}</p>}
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4" noValidate> {/* Added noValidate */}
+      {apiError && <p className="text-red-500 mb-4">{apiError}</p>}
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4" noValidate>
         <div>
+          <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">Product Name:</label>
           <input
             id="name"
             type="text"
-            placeholder="Product Name"
-            className="w-full border px-3 py-2 rounded"
-            {...register('name', {
-              required: 'Product name is required',
-              minLength: {
-                value: 3,
-                message: 'Name must be at least 3 characters',
-              },
-            })}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            {...register('name')}
           />
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -72,20 +80,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
         </div>
 
         <div>
+          <label htmlFor="price" className="block text-gray-700 text-sm font-bold mb-2">Price:</label>
           <input
             id="price"
             type="number"
-            step="0.01" // Allow decimal prices
-            placeholder="Price"
-            className="w-full border px-3 py-2 rounded"
-            {...register('price', {
-              required: 'Price is required',
-              min: {
-                value: 0.01,
-                message: 'Price must be greater than 0',
-              },
-              valueAsNumber: true, // Convert to number on submission
-            })}
+            step="0.01"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            {...register('price')}
           />
           {errors.price && (
             <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
@@ -93,17 +94,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
         </div>
 
         <div>
+          <label htmlFor="description" className="block text-gray-700 text-sm font-bold mb-2">Description (optional):</label>
           <textarea
             id="description"
-            placeholder="Description"
-            className="w-full border px-3 py-2 rounded"
-            rows={4} // Added rows for better textarea display
-            {...register('description', {
-              maxLength: {
-                value: 500,
-                message: 'Description cannot exceed 500 characters',
-              },
-            })}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            rows={4}
+            {...register('description')}
           />
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
@@ -111,19 +107,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
         </div>
 
         <div>
+          <label htmlFor="quantity" className="block text-gray-700 text-sm font-bold mb-2">Quantity:</label>
           <input
             id="quantity"
             type="number"
-            placeholder="Quantity"
-            className="w-full border px-3 py-2 rounded"
-            {...register('quantity', {
-              required: 'Quantity is required',
-              min: {
-                value: 1,
-                message: 'Quantity must be at least 1',
-              },
-              valueAsNumber: true, // Convert to number on submission
-            })}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            {...register('quantity')}
           />
           {errors.quantity && (
             <p className="mt-1 text-sm text-red-600">{errors.quantity.message}</p>
@@ -131,17 +120,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
         </div>
 
         <div>
+          <label htmlFor="imageUrl" className="block text-gray-700 text-sm font-bold mb-2">Image URL (optional):</label>
           <input
             id="imageUrl"
             type="text"
-            placeholder="Image URL (optional)"
-            className="w-full border px-3 py-2 rounded"
-            {...register('imageUrl', {
-              pattern: {
-                value: /^(ftp|http|https):\/\/[^ "]+$/, // Basic URL pattern
-                message: 'Invalid URL format',
-              },
-            })}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            {...register('imageUrl')}
           />
           {errors.imageUrl && (
             <p className="mt-1 text-sm text-red-600">{errors.imageUrl.message}</p>

@@ -9,6 +9,7 @@ import { useRouter, usePathname } from 'next/navigation'; // Import usePathname
 interface AuthUser {
   shopkeeperId: string;
   email: string;
+  shopName: string; // Added shopName to the interface
   // Add other profile details you want to expose from the backend
 }
 
@@ -46,8 +47,9 @@ export const useAuthUser = (): UseAuthUserResult => {
         const profile = await authApi.getProfile();
         // console.log('useAuthUser: Profile fetched from API:', profile); // LOG 3
         
-        setUser({ shopkeeperId: profile.shopkeeperId, email: profile.email });
-        // console.log('useAuthUser: User state set to:', { shopkeeperId: profile.shopkeeperId, email: profile.email });
+        // Ensure shopName is extracted and included
+        setUser({ shopkeeperId: profile.shopkeeperId, email: profile.email, shopName: profile.shopName });
+        // console.log('useAuthUser: User state set to:', { shopkeeperId: profile.shopkeeperId, email: profile.email, shopName: profile.shopName });
 
       } catch (err: any) {
         // console.error('useAuthUser: Failed to fetch user profile:', err); // LOG 5

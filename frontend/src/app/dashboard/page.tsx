@@ -17,15 +17,11 @@ export default function ShopkeeperDashboardPage() {
     showTransferModal,
     selectedProductForTransfer,
     otherShopkeepers,
-    transferQuantity,
-    targetShopkeeperId,
     transferError,
     transferLoading,
     handleInitiateTransfer,
     handleSendTransferRequest,
     handleCloseTransferModal,
-    setTransferQuantity,
-    setTargetShopkeeperId,
   } = useProductTransfer(currentShopkeeperId, fetchProducts);
 
   const handleAddNewProduct = () => {
@@ -89,13 +85,9 @@ export default function ShopkeeperDashboardPage() {
         show={showTransferModal}
         product={selectedProductForTransfer}
         otherShopkeepers={otherShopkeepers}
-        quantity={transferQuantity}
-        targetShopkeeperId={targetShopkeeperId}
         error={transferError}
         loading={transferLoading}
-        onQuantityChange={setTransferQuantity}
-        onTargetShopkeeperChange={setTargetShopkeeperId}
-        onSendRequest={handleSendTransferRequest}
+        onSubmit={handleSendTransferRequest}
         onClose={handleCloseTransferModal}
       />
     </div>

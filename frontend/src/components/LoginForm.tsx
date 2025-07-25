@@ -6,6 +6,17 @@ import authApi from '@/api/auth.api';
 import Cookies from 'js-cookie';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod'; // Import zodResolver
+import { z } from 'zod'; // Import z from zod
+
+// Define the Zod schema for login form validation
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address').min(1, 'Email is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters').min(1, 'Password is required'),
+});
+
+// Infer the type from the schema
+type LoginFormInputs = z.infer<typeof loginSchema>;
 
 const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -16,9 +27,11 @@ const LoginForm: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm<LoginFormInputs>({ // Specify the type for useForm
+    resolver: zodResolver(loginSchema), // Integrate Zod resolver
+  });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: LoginFormInputs) => { // Use the inferred type for data
     setApiError('');
     setLoading(true);
 
@@ -31,7 +44,7 @@ const LoginForm: React.FC = () => {
       Cookies.set('token', access_token, { expires: 7, secure: process.env.NODE_ENV === 'production' });
       router.push('/dashboard');
     } catch (err: any) {
-      setApiError(err.message || 'Login failed'); // Using err.message directly from Error object
+      setApiError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -54,40 +67,28 @@ const LoginForm: React.FC = () => {
         )}
         <div className="space-y-4"> {/* Changed from -space-y-px for better spacing between fields */}
           <div>
-            <label htmlFor="email" className="sr-only">Email address</label>
+            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">Email address:</label> {/* Changed label */}
             <input
               id="email"
               type="email"
               autoComplete="email"
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Email address"
-              {...register('email', {
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
-                  message: 'Invalid email address',
-                },
-              })}
+              // Removed placeholder
+              {...register('email')}
             />
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email.message as string}</p>
             )}
           </div>
           <div>
-            <label htmlFor="password" className="sr-only">Password</label>
+            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">Password:</label> {/* Changed label */}
             <input
               id="password"
               type="password"
               autoComplete="current-password"
               className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Password"
-              {...register('password', {
-                required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters',
-                },
-              })}
+              // Removed placeholder
+              {...register('password')}
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password.message as string}</p>
