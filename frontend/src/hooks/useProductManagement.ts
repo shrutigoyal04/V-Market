@@ -59,7 +59,21 @@ export const useProductManagement = (): UseProductManagementResult => {
         setProducts(prevProducts => prevProducts.filter(product => product.id !== id));
       } catch (err: any) {
         console.error('Failed to delete product:', err);
-        setError(err?.response?.data?.message || 'Failed to delete product.');
+        // --- MODIFIED ERROR MESSAGE EXTRACTION AND DISPLAY LOGIC ---
+        let errorMessage = 'Failed to delete product.'; // Default fallback message
+
+        if (err.response && err.response.data) {
+          if (err.response.data.message) {
+            errorMessage = Array.isArray(err.response.data.message)
+              ? err.response.data.message.join(', ')
+              : err.response.data.message;
+          } else if (err.response.data.error) {
+            errorMessage = err.response.data.error;
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        window.alert(errorMessage);
       } finally {
         setLoading(false);
       }

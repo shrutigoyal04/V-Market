@@ -1,4 +1,3 @@
-// frontend/src/hooks/useProductTransfer.ts
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,10 +13,8 @@ interface UseProductTransferResult {
   transferError: string | null;
   transferLoading: boolean;
   handleInitiateTransfer: (product: Product) => void;
-  // Updated signature to accept data directly from the modal's internal form
   handleSendTransferRequest: (data: { quantity: number; targetShopkeeperId: string }) => Promise<void>;
   handleCloseTransferModal: () => void;
-  // Removed transferQuantity, targetShopkeeperId, setTransferQuantity, setTargetShopkeeperId
 }
 
 export const useProductTransfer = (currentShopkeeperId: string | null, onTransferSuccess?: () => void): UseProductTransferResult => {
@@ -71,8 +68,6 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
       setTransferError('No product selected for transfer.');
       return;
     }
-    // Zod in the modal now handles quantity and targetShopkeeperId validation,
-    // so we don't need redundant checks here.
 
     setTransferLoading(true);
     setTransferError(null);
@@ -106,6 +101,5 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
     handleInitiateTransfer,
     handleSendTransferRequest,
     handleCloseTransferModal,
-    // Removed transferQuantity, targetShopkeeperId, setTransferQuantity, setTargetShopkeeperId from return
   };
 };
