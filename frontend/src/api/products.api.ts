@@ -16,7 +16,7 @@ const productsApi = {
     return response.data;
   },
 
-  // Get all products
+  // REVERTED: Get all products without pagination
   getAll: async (): Promise<Product[]> => { // Ensure correct return type
     const response = await axios.get('/products');
     return response.data;

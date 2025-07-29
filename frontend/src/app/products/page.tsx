@@ -3,27 +3,32 @@
 import productsApi from '@/api/products.api';
 import { useFetchData } from '@/hooks/useFetchData';
 import ReadOnlyProductCard from '@/components/ReadOnlyProductCard';
-import React, { useState, useMemo } from 'react'; // Import useState and useMemo
+import React, { useState, useMemo } from 'react'; // Remove useCallback, PaginationControls
+import { normalizeString } from '@/lib/searchUtils'; // Keep normalizeString for search enhancement
 
 export default function ProductsPage() {
+  // REVERTED: No pagination parameters here for useFetchData
   const { data: products, loading, error } = useFetchData(productsApi.getAll);
-  const [searchTerm, setSearchTerm] = useState(''); // State for the search term
 
-  // Memoize the filtered products
+  const [searchTerm, setSearchTerm] = useState('');
+
   const filteredProducts = useMemo(() => {
     if (!products) return [];
+    const normalizedSearchTerm = normalizeString(searchTerm);
+
+    if (!normalizedSearchTerm) return products;
+
     return products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase()) || // Search description too
-      product.shopkeeper?.shopName.toLowerCase().includes(searchTerm.toLowerCase()) // Search by shop name
+      normalizeString(product.name).includes(normalizedSearchTerm) ||
+      normalizeString(product.description).includes(normalizedSearchTerm) ||
+      normalizeString(product.shopkeeper?.shopName).includes(normalizedSearchTerm)
     );
   }, [products, searchTerm]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">All Products</h1>
+    <div className="container mx-auto p-6 md:p-10 bg-gray-50 min-h-[calc(100vh-80px)] rounded-xl shadow-inner">
+      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 pb-4 border-b border-gray-200">All Products</h1>
 
-      {/* Search Input Field */}
       <div className="mb-6">
         <input
           type="text"
@@ -35,20 +40,26 @@ export default function ProductsPage() {
       </div>
 
       {loading ? (
-        <p className="text-gray-600">Loading products...</p>
+        <p className="text-center text-gray-600 text-xl py-20">Loading products...</p>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : Array.isArray(filteredProducts) && filteredProducts.length === 0 ? (
-        <p className="text-gray-500">No products found matching your search.</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.isArray(filteredProducts) && filteredProducts.map((product) => (
-            <ReadOnlyProductCard
-              key={product.id}
-              product={product}
-            />
-          ))}
+        <div className="text-red-600 text-center py-20">
+          <p className="text-xl font-medium mb-2">Error loading products:</p>
+          <p>{error}</p>
         </div>
+      ) : Array.isArray(filteredProducts) && filteredProducts.length === 0 ? (
+        <p className="text-gray-500 text-center py-20">No products found matching your search criteria.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {Array.isArray(filteredProducts) && filteredProducts.map((product) => (
+              <ReadOnlyProductCard
+                key={product.id}
+                product={product}
+              />
+            ))}
+          </div>
+          {/* REVERTED: Removed pagination controls */}
+        </>
       )}
     </div>
   );

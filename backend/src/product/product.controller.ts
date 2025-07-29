@@ -3,12 +3,13 @@ import { AuthGuard } from '@nestjs/passport';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Request } from 'express'; // Import Request from express
+import { Request } from 'express';
 
 interface AuthenticatedRequest extends Request {
   user: {
     shopkeeperId: string;
-    email: string; // Add email as well if your payload includes it
+    email: string;
+    shopName: string;
   };
 }
 
@@ -24,6 +25,7 @@ export class ProductController {
   }
 
   @Get()
+  // REVERTED: Removed pagination query parameters
   findAll() {
     return this.productService.findAll();
   }

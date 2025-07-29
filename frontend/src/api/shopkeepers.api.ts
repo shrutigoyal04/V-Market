@@ -6,11 +6,12 @@ export interface ShopkeeperData {
   shopName: string;
   address: string;
   phone?: string;
-  createdAt?: string; // Add optional createdAt/updatedAt if your backend sends them
+  createdAt?: string;
   updatedAt?: string;
 }
 
 const shopkeepersApi = {
+  // REVERTED: Get all shopkeepers without pagination
   getAll: async (): Promise<ShopkeeperData[]> => {
     const response = await axios.get('/shopkeeper');
     return response.data;

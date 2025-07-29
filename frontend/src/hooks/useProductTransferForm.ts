@@ -1,4 +1,3 @@
-// frontend/src/hooks/useProductTransferForm.ts
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
@@ -8,8 +7,6 @@ import { z } from 'zod';
 import { Product } from '@/types/product';
 import { ShopkeeperData } from '@/api/shopkeepers.api';
 
-// Define the Zod schema for product transfer validation
-// This will be dynamic based on the product's available quantity
 const createTransferSchema = (productQuantity: number | undefined) => z.object({
   quantity: z.preprocess(
     (val) => Number(val),
