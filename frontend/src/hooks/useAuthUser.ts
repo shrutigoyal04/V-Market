@@ -6,11 +6,12 @@ import authApi from '@/api/auth.api'; // Assuming you have authApi
 import Cookies from 'js-cookie';
 import { useRouter, usePathname } from 'next/navigation'; // Import usePathname
 
-interface AuthUser {
-  shopkeeperId: string;
+export interface AuthUser { // Added 'export' keyword
+  shopkeeperId: string; // Reverted to shopkeeperId
   email: string;
-  shopName: string; // Added shopName to the interface
-  // Add other profile details you want to expose from the backend
+  shopName: string;
+  address: string;
+  phone?: string;
 }
 
 interface UseAuthUserResult {
@@ -18,6 +19,7 @@ interface UseAuthUserResult {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  fetchAuthUser: () => Promise<void>;
 }
 
 export const useAuthUser = (): UseAuthUserResult => {
@@ -27,47 +29,46 @@ export const useAuthUser = (): UseAuthUserResult => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const fetchAuthUser = async () => {
+    const token = Cookies.get('token');
+
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      setError('No authentication token found.');
+      if (!pathname.startsWith('/login') && !pathname.startsWith('/register')) {
+        router.push('/login');
+      }
+      return;
+    }
+
+    try {
+      const profile = await authApi.getProfile();
+      // Map profile.id from backend (Shopkeeper entity) to shopkeeperId in AuthUser
+      setUser({
+        shopkeeperId: profile.id, // Map backend's 'id' to 'shopkeeperId'
+        email: profile.email,
+        shopName: profile.shopName,
+        address: profile.address,
+        phone: profile.phone,
+      });
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to load user profile.');
+      setUser(null);
+      if (err.response?.status === 401) {
+        Cookies.remove('token');
+        router.push('/login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUser = async () => {
-      const token = Cookies.get('token');
-      // console.log('useAuthUser: Initial token read from cookie:', token ? 'exists' : 'does NOT exist', token); // LOG 1
+    fetchAuthUser();
+  }, [router, pathname]);
 
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        setError('No authentication token found.');
-        if (!pathname.startsWith('/login') && !pathname.startsWith('/register')) {
-          router.push('/login');
-        }
-        return;
-      }
+  console.log('useAuthUser: Current return state - user:', user, 'loading:', loading);
 
-      try {
-        // console.log('useAuthUser: Attempting to fetch profile...'); // LOG 2
-        const profile = await authApi.getProfile();
-        // console.log('useAuthUser: Profile fetched from API:', profile); // LOG 3
-        
-        // Ensure shopName is extracted and included
-        setUser({ shopkeeperId: profile.shopkeeperId, email: profile.email, shopName: profile.shopName });
-        // console.log('useAuthUser: User state set to:', { shopkeeperId: profile.shopkeeperId, email: profile.email, shopName: profile.shopName });
-
-      } catch (err: any) {
-        // console.error('useAuthUser: Failed to fetch user profile:', err); // LOG 5
-        setError(err?.response?.data?.message || 'Failed to load user profile.');
-        setUser(null);
-        if (err.response?.status === 401) {
-          Cookies.remove('token');
-          router.push('/login');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [router, pathname]); // Keep existing dependencies
-
-  console.log('useAuthUser: Current return state - user:', user, 'loading:', loading); // LOG 6 (renders on every render)
-
-  return { user, loading, error, isAuthenticated: !!user };
+  return { user, loading, error, isAuthenticated: !!user, fetchAuthUser };
 };

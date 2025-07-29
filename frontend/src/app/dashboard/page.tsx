@@ -6,12 +6,15 @@ import { useProductManagement } from '@/hooks/useProductManagement';
 import { useProductTransfer } from '@/hooks/useProductTransfer';
 import ProductCard from '@/components/ProductCard';
 import ProductTransferModal from '@/components/ProductTransferModal';
-import { Product } from '@/types/product'; // Import Product for type safety if not already there
+import { Product } from '@/types/product';
+import { useAuthUser } from '@/hooks/useAuthUser'; // Import useAuthUser
 
 export default function ShopkeeperDashboardPage() {
   const router = useRouter();
+  const { user, loading: userLoading } = useAuthUser(); // Get user from useAuthUser
+  const currentShopkeeperId = user?.shopkeeperId || null; // Use user.shopkeeperId for currentShopkeeperId
 
-  const { products, loading, error, currentShopkeeperId, fetchProducts, handleDeleteProduct } = useProductManagement();
+  const { products, loading, error, fetchProducts, handleDeleteProduct } = useProductManagement();
 
   const {
     showTransferModal,
@@ -32,8 +35,20 @@ export default function ShopkeeperDashboardPage() {
     router.push(`/products/${id}/edit`);
   };
 
+  const handleTransferSubmit = async (data: { quantity: number; targetShopkeeperId: string }): Promise<boolean> => {
+    const success = await handleSendTransferRequest(data);
+    if (success) {
+      router.push('/requests'); // Navigate to requests page on successful transfer
+    }
+    return success; // Explicitly return the boolean result
+  };
+
+  if (userLoading) {
+    return <p className="text-center text-gray-600 text-xl py-20">Loading user data...</p>;
+  }
+
   return (
-    <div className="container mx-auto p-6 md:p-10 bg-gray-50 min-h-[calc(100vh-80px)] rounded-xl shadow-inner"> {/* Enhanced outer container */}
+    <div className="container mx-auto p-6 md:p-10 bg-gray-50 min-h-[calc(100vh-80px)] rounded-xl shadow-inner">
       {/* Dashboard Header Section */}
       <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
         <h1 className="text-4xl font-extrabold text-gray-900">Your Products</h1>
@@ -64,7 +79,7 @@ export default function ShopkeeperDashboardPage() {
               <p className="text-gray-600">Click "Add New Product" to get started!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"> {/* Increased gap and added xl column */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Array.isArray(products) && products.map((product: Product) => (
                 <ProductCard
                   key={product.id}
@@ -87,7 +102,7 @@ export default function ShopkeeperDashboardPage() {
         otherShopkeepers={otherShopkeepers}
         error={transferError}
         loading={transferLoading}
-        onSubmit={handleSendTransferRequest}
+        onSubmit={handleTransferSubmit}
         onClose={handleCloseTransferModal}
       />
     </div>

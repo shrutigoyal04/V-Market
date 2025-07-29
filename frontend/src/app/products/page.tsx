@@ -3,27 +3,34 @@
 import productsApi from '@/api/products.api';
 import { useFetchData } from '@/hooks/useFetchData';
 import ReadOnlyProductCard from '@/components/ReadOnlyProductCard';
-import React, { useState, useMemo } from 'react'; // Remove useCallback, PaginationControls
-import { normalizeString } from '@/lib/searchUtils'; // Keep normalizeString for search enhancement
+import React, { useState, useMemo, useCallback } from 'react';
+import PaginationControls from '@/components/PaginationControls';
+import { normalizeString } from '@/lib/searchUtils';
 
 export default function ProductsPage() {
-  // REVERTED: No pagination parameters here for useFetchData
-  const { data: products, loading, error } = useFetchData(productsApi.getAll);
+  const fetchProductsPaginatedAndSearched = useCallback((page: number, limit: number, search: string) => {
+    // Apply normalizeString here, just before the API call
+    const normalizedSearch = normalizeString(search);
+    return productsApi.getAll(page, limit, normalizedSearch);
+  }, []);
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const {
+    data: products,
+    total,
+    loading,
+    error,
+    currentPage,
+    itemsPerPage,
+    searchTerm,
+    setPage,
+    setItemsPerPage,
+    setSearchTerm,
+  } = useFetchData(fetchProductsPaginatedAndSearched, [], 10);
 
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-    const normalizedSearchTerm = normalizeString(searchTerm);
+  // No more client-side filtering; products from useFetchData are already paginated and searched by backend.
+  const displayedProducts = products;
 
-    if (!normalizedSearchTerm) return products;
-
-    return products.filter(product =>
-      normalizeString(product.name).includes(normalizedSearchTerm) ||
-      normalizeString(product.description).includes(normalizedSearchTerm) ||
-      normalizeString(product.shopkeeper?.shopName).includes(normalizedSearchTerm)
-    );
-  }, [products, searchTerm]);
+  const totalPages = total !== null ? Math.ceil(total / itemsPerPage) : 0;
 
   return (
     <div className="container mx-auto p-6 md:p-10 bg-gray-50 min-h-[calc(100vh-80px)] rounded-xl shadow-inner">
@@ -35,7 +42,7 @@ export default function ProductsPage() {
           placeholder="Search by product name, description, or shop name..."
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)} // Store the raw input value
         />
       </div>
 
@@ -46,19 +53,28 @@ export default function ProductsPage() {
           <p className="text-xl font-medium mb-2">Error loading products:</p>
           <p>{error}</p>
         </div>
-      ) : Array.isArray(filteredProducts) && filteredProducts.length === 0 ? (
+      ) : Array.isArray(displayedProducts) && displayedProducts.length === 0 ? (
         <p className="text-gray-500 text-center py-20">No products found matching your search criteria.</p>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {Array.isArray(filteredProducts) && filteredProducts.map((product) => (
+            {Array.isArray(displayedProducts) && displayedProducts.map((product) => (
               <ReadOnlyProductCard
                 key={product.id}
                 product={product}
               />
             ))}
           </div>
-          {/* REVERTED: Removed pagination controls */}
+          {total !== null && total > 0 && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              itemsPerPage={itemsPerPage}
+              onItemsPerPageChange={setItemsPerPage}
+              totalItems={total}
+            />
+          )}
         </>
       )}
     </div>

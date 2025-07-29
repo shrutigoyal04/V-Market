@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpCode, HttpStatus, Query } from '@nestjs/common'; // Add Query
 import { AuthGuard } from '@nestjs/passport';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -25,9 +25,19 @@ export class ProductController {
   }
 
   @Get()
-  // REVERTED: Removed pagination query parameters
-  findAll() {
-    return this.productService.findAll();
+  findAll(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search?: string,
+  ) {
+    // FIX: Ensure parseInt result is not NaN, fallback to defaults
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
+
+    const actualPage = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+    const actualLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 10 : parsedLimit; // Keep 10 as default
+
+    return this.productService.findAll(actualPage, actualLimit, search);
   }
 
   @UseGuards(AuthGuard('jwt'))

@@ -38,11 +38,14 @@ const Navbar: React.FC = () => {
           {user ? (
             // Authenticated Links
             <>
-              <Link href="/dashboard" className="hover:text-gray-200 transition duration-200">
-                Dashboard
+              <Link href="/" className="hover:text-gray-200 transition duration-200">
+                All Shops
               </Link>
               <Link href="/products" className="hover:text-gray-200 transition duration-200">
                 All Products
+              </Link>
+              <Link href="/dashboard" className="hover:text-gray-200 transition duration-200">
+                Dashboard
               </Link>
               <Link href="/requests" className="hover:text-gray-200 transition duration-200">
                 Product Requests
@@ -50,9 +53,9 @@ const Navbar: React.FC = () => {
               <Link href="/transfer-history" className="hover:text-gray-200 transition duration-200">
                 Transfer History
               </Link>
-              <Link href="/" className="hover:text-gray-200 transition duration-200">
-                All Shops
-              </Link> {/* Added "All Shops" link for logged-in users */}
+              <Link href="/profile" className="hover:text-gray-200 transition duration-200">
+                Profile
+              </Link>
               <span className="text-indigo-100 text-sm italic">
                 Welcome to {user.shopName}! {/* Changed from user.email to user.shopName */}
               </span>

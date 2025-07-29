@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import productsApi from '@/api/products.api';
-import productRequestsApi, { CreateProductRequestPayload } from '@/api/product-requests.api';
+import { useState, useCallback, useEffect } from 'react';
+import { Product } from '@/types/product'; // Only import Product from types/product
+import productRequestsApi, { CreateProductRequestPayload } from '@/api/product-requests.api'; // Import CreateProductRequestPayload from its correct api file
 import shopkeepersApi, { ShopkeeperData } from '@/api/shopkeepers.api';
-import { Product } from '@/types/product';
 
 interface UseProductTransferResult {
   showTransferModal: boolean;
@@ -13,7 +12,7 @@ interface UseProductTransferResult {
   transferError: string | null;
   transferLoading: boolean;
   handleInitiateTransfer: (product: Product) => void;
-  handleSendTransferRequest: (data: { quantity: number; targetShopkeeperId: string }) => Promise<void>;
+  handleSendTransferRequest: (data: { quantity: number; targetShopkeeperId: string }) => Promise<boolean>;
   handleCloseTransferModal: () => void;
 }
 
@@ -21,27 +20,21 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [selectedProductForTransfer, setSelectedProductForTransfer] = useState<Product | null>(null);
   const [otherShopkeepers, setOtherShopkeepers] = useState<ShopkeeperData[]>([]);
-  // These states are now primarily for initial values when opening the modal
-  const [transferQuantity, setTransferQuantity] = useState<number>(1);
-  const [targetShopkeeperId, setTargetShopkeeperId] = useState<string>('');
   const [transferError, setTransferError] = useState<string | null>(null);
-  const [transferLoading, setTransferLoading] = useState(false);
-
-  // console.log('useProductTransfer: Received currentShopkeeperId:', currentShopkeeperId); // LOG 8
+  const [transferLoading, setTransferLoading] = useState(false); // Corrected setter name
 
   useEffect(() => {
     const fetchOtherShopkeepers = async () => {
-      // console.log('useProductTransfer: Fetching other shopkeepers for ID:', currentShopkeeperId); // LOG 9
       if (!currentShopkeeperId) {
         setOtherShopkeepers([]);
         return;
       }
       try {
-        const allShops = await shopkeepersApi.getAll();
-        const filteredShops = allShops.filter(shop => shop.id !== currentShopkeeperId);
+        const allShops = await shopkeepersApi.getAll(1, 1000);
+        const filteredShops = allShops.shopkeepers.filter((shop: ShopkeeperData) => shop.id !== currentShopkeeperId);
         setOtherShopkeepers(filteredShops);
       } catch (err: any) {
-        // console.error('Failed to fetch other shopkeepers:', err);
+        console.error('Failed to fetch other shopkeepers:', err);
         setTransferError('Failed to load other shops for transfer.');
       }
     };
@@ -51,8 +44,6 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
 
   const handleInitiateTransfer = useCallback((product: Product) => {
     setSelectedProductForTransfer(product);
-    setTransferQuantity(1); // Set initial quantity for modal's default
-    setTargetShopkeeperId(''); // Set initial target for modal's default
     setTransferError(null);
     setShowTransferModal(true);
   }, []);
@@ -62,33 +53,33 @@ export const useProductTransfer = (currentShopkeeperId: string | null, onTransfe
     setSelectedProductForTransfer(null);
   }, []);
 
-  // Updated signature to accept quantity and targetShopkeeperId from the modal
-  const handleSendTransferRequest = useCallback(async (data: { quantity: number; targetShopkeeperId: string }) => {
+  const handleSendTransferRequest = useCallback(async (data: { quantity: number; targetShopkeeperId: string }): Promise<boolean> => {
     if (!selectedProductForTransfer) {
       setTransferError('No product selected for transfer.');
-      return;
+      return false;
     }
 
-    setTransferLoading(true);
+    setTransferLoading(true); // Corrected setter name
     setTransferError(null);
 
-    // console.log('useProductTransfer: Sending request with Initiator ID (from currentShopkeeperId):', currentShopkeeperId); // LOG 10
     const payload: CreateProductRequestPayload = {
       productId: selectedProductForTransfer.id,
-      requesterId: data.targetShopkeeperId, // Use data from modal
-      quantity: data.quantity, // Use data from modal
+      requesterId: data.targetShopkeeperId,
+      quantity: data.quantity,
     };
 
     try {
       await productRequestsApi.createExportRequest(payload);
       alert('Product transfer request sent successfully!');
       handleCloseTransferModal();
-      onTransferSuccess?.(); // Callback to parent to re-fetch products
+      onTransferSuccess?.();
+      return true;
     } catch (err: any) {
       console.error('Failed to send transfer request:', err);
       setTransferError(err?.response?.data?.message || 'Failed to send transfer request.');
+      return false;
     } finally {
-      setTransferLoading(false);
+      setTransferLoading(false); // Corrected setter name
     }
   }, [selectedProductForTransfer, handleCloseTransferModal, onTransferSuccess, currentShopkeeperId]);
 

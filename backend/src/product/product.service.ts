@@ -1,11 +1,24 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common'; // Keep BadRequestException
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm'; // Keep In operator
+import { Repository, In, ILike } from 'typeorm'; // Import ILike
 import { Product } from '../database/entities/product.entity';
 import { Shopkeeper } from '../database/entities/shopkeeper.entity';
 import { ProductRequest, ProductRequestStatus } from '../database/entities/product-request.entity'; // Keep ProductRequest and ProductRequestStatus
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+
+// Utility function to normalize strings for search (backend equivalent)
+const normalizeString = (str: string | null | undefined): string => {
+  if (str === null || str === undefined) {
+    return '';
+  }
+  return String(str) // Ensure it's treated as a string
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '') // Remove anything that's not a letter, number, or whitespace
+    .replace(/\s+/g, ' '); // Replace one or more whitespace characters with a single space
+};
+
 
 @Injectable()
 export class ProductService {
@@ -31,14 +44,29 @@ export class ProductService {
     return this.productsRepository.save(product);
   }
 
-  // REVERTED: Changed back to original findAll without pagination
-  async findAll(): Promise<Product[]> {
-    return this.productsRepository.find({
+  async findAll(page: number = 1, limit: number = 10, search?: string): Promise<{ products: Product[]; total: number }> {
+    const skip = (page - 1) * limit;
+    
+    let whereConditions: any = {};
+    if (search) {
+      const normalizedSearch = normalizeString(search); // Normalize the search term
+      whereConditions = [
+        { name: ILike(`%${normalizedSearch}%`) },
+        { description: ILike(`%${normalizedSearch}%`) },
+        { shopkeeper: { shopName: ILike(`%${normalizedSearch}%`) } }
+      ];
+    }
+
+    const [products, total] = await this.productsRepository.findAndCount({
+      where: whereConditions,
       relations: ['shopkeeper'],
       order: {
-        createdAt: 'DESC', // Keep sorting by createdAt
+        createdAt: 'DESC',
       },
+      skip: skip,
+      take: limit,
     });
+    return { products, total };
   }
 
   async findByShopkeeperId(shopkeeperId: string): Promise<Product[]> {

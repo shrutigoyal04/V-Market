@@ -1,10 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Product } from '@/types/product';
 import { ShopkeeperData } from '@/api/shopkeepers.api';
-import { useProductTransferForm } from '@/hooks/useProductTransferForm'; // Import the new hook
 import ShopSearchInput from './ShopSearchInput'; // Import the new component
+import { useProductTransferForm } from '@/hooks/useProductTransferForm';
+
 
 interface ProductTransferModalProps {
   show: boolean;
@@ -12,9 +16,17 @@ interface ProductTransferModalProps {
   otherShopkeepers: ShopkeeperData[];
   error: string | null;
   loading: boolean;
-  onSubmit: (data: { quantity: number; targetShopkeeperId: string }) => Promise<void>;
+  onSubmit: (data: { quantity: number; targetShopkeeperId: string }) => Promise<boolean>; // Corrected to Promise<boolean>
   onClose: () => void;
 }
+
+// Define the schema for product transfer form validation
+const transferSchema = z.object({
+  quantity: z.number().min(1, 'Quantity must be at least 1').int('Quantity must be an integer'),
+  targetShopkeeperId: z.string().min(1, 'Please select a target shopkeeper.'),
+});
+
+type TransferFormData = z.infer<typeof transferSchema>;
 
 const ProductTransferModal: React.FC<ProductTransferModalProps> = ({
   show,
@@ -63,7 +75,7 @@ const ProductTransferModal: React.FC<ProductTransferModalProps> = ({
               <input
                 type="number"
                 id="quantity"
-                {...register('quantity')}
+                {...register('quantity', { valueAsNumber: true })} // Ensure quantity is treated as number
                 min="1"
                 max={product.quantity}
                 className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -105,7 +117,7 @@ const ProductTransferModal: React.FC<ProductTransferModalProps> = ({
               {loading ? 'Sending...' : 'Send Request'}
             </button>
           </div>
-        </form>
+        </form> {/* Correctly closing the form tag */}
       </div>
     </div>
   );

@@ -4,11 +4,14 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express'; // Ensure Request is imported
+import { Shopkeeper } from '../database/entities/shopkeeper.entity'; // Import Shopkeeper entity
 
 interface AuthenticatedRequest extends Request {
   user: {
     shopkeeperId: string;
     email: string;
+    // Add other fields that might be in the JWT payload if necessary,
+    // but the full profile will be fetched from the service
   };
 }
 
@@ -29,7 +32,9 @@ export class AuthController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('profile')
-  getProfile(@Req() req: AuthenticatedRequest) {
-    return req.user; // Return only the user data from token for profile
+  async getProfile(@Req() req: AuthenticatedRequest) {
+    // Fetch the full shopkeeper profile using the shopkeeperId from the token
+    const shopkeeper = await this.authService.getShopkeeperProfile(req.user.shopkeeperId);
+    return shopkeeper; // Return the full shopkeeper object
   }
 }

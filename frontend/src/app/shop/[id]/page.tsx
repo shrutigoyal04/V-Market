@@ -2,40 +2,46 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react'; // Import useState and useEffect
 import productsApi from '@/api/products.api';
-import shopkeepersApi from '@/api/shopkeepers.api';
-import { useFetchData } from '@/hooks/useFetchData';
+import shopkeepersApi, { ShopkeeperData } from '@/api/shopkeepers.api'; // Import ShopkeeperData
 import ReadOnlyProductCard from '@/components/ReadOnlyProductCard';
-import { useCallback } from 'react'; // Import useCallback
+import { Product } from '@/types/product'; // Import Product type
 
 export default function ShopDetailsPage() {
   const params = useParams();
   const shopkeeperId = params.id as string;
 
-  // Memoize the fetch functions using useCallback
-  const fetchShopkeeper = useCallback(
-    () => shopkeepersApi.getById(shopkeeperId),
-    [shopkeeperId] // Dependency: shopkeeperId
-  );
+  const [shopkeeper, setShopkeeper] = useState<ShopkeeperData | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchProductsForShop = useCallback(
-    () => productsApi.getProductsByShopId(shopkeeperId),
-    [shopkeeperId] // Dependency: shopkeeperId
-  );
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch shopkeeper details
+        const fetchedShopkeeper = await shopkeepersApi.getById(shopkeeperId);
+        setShopkeeper(fetchedShopkeeper);
 
-  // Use the memoized fetch functions with useFetchData
-  const { data: shopkeeper, loading: shopkeeperLoading, error: shopkeeperError } = useFetchData(
-    fetchShopkeeper,
-    [shopkeeperId] // Dependencies for useFetchData's internal useEffect
-  );
+        // Fetch products for the shop
+        const fetchedProducts = await productsApi.getProductsByShopId(shopkeeperId);
+        setProducts(fetchedProducts);
 
-  const { data: products, loading: productsLoading, error: productsError } = useFetchData(
-    fetchProductsForShop,
-    [shopkeeperId] // Dependencies for useFetchData's internal useEffect
-  );
+      } catch (err: any) {
+        console.error('Failed to fetch shop details:', err);
+        setError(err?.response?.data?.message || 'Failed to load shop details.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const loading = shopkeeperLoading || productsLoading;
-  const error = shopkeeperError || productsError;
+    if (shopkeeperId) { // Only fetch if shopkeeperId is available
+      fetchData();
+    }
+  }, [shopkeeperId]);
 
   if (loading) {
     return <p className="p-6 text-gray-600">Loading shop details...</p>;

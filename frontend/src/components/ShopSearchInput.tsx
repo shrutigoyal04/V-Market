@@ -58,6 +58,11 @@ const ShopSearchInput: React.FC<ShopSearchInputProps> = ({
           ))}
         </ul>
       )}
+      {isDropdownOpen && filteredShops.length === 0 && searchTerm && (
+        <div className="absolute z-20 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 px-3 py-2 text-gray-500">
+          No results found.
+        </div>
+      )}
       {errors && errors.targetShopkeeperId && (
         <p className="mt-1 text-sm text-red-600">{errors.targetShopkeeperId.message}</p>
       )}

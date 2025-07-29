@@ -8,6 +8,11 @@ interface ShopkeeperProductsResponse {
   products: Product[];
 }
 
+// Define the expected paginated response structure for products
+interface PaginatedProductsResponse {
+  products: Product[];
+  total: number;
+}
 
 const productsApi = {
   // Create a new product
@@ -16,9 +21,9 @@ const productsApi = {
     return response.data;
   },
 
-  // REVERTED: Get all products without pagination
-  getAll: async (): Promise<Product[]> => { // Ensure correct return type
-    const response = await axios.get('/products');
+  // Re-implementing pagination for getAll
+  getAll: async (page: number, limit: number, search: string = ''): Promise<PaginatedProductsResponse> => {
+    const response = await axios.get(`/products?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`); // Encode search term
     return response.data;
   },
 
