@@ -5,5 +5,6 @@ export const normalizeString = (str: string | null | undefined): string => {
   return str
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s]/g, ''); // Remove anything that's not a letter (a-z), number (0-9), or whitespace (\s)
+    .replace(/[^a-z0-9\s]/g, '') // Remove anything that's not a letter (a-z), number (0-9), or whitespace (\s)
+    .replace(/\s+/g, ' '); // NEW: Replace one or more whitespace characters with a single space
 };
