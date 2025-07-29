@@ -2,45 +2,49 @@
 'use client';
 
 // CONSOLIDATED IMPORTS:
-import productRequestsApi, { ProductRequestStatus, UpdateProductRequestPayload } from '@/api/product-requests.api';
-import { ProductRequest } from '@/types/product'; // Correct import path for ProductRequest
+import productRequestsApi, { ProductRequestStatus, UpdateProductRequestPayload, ProductRequestData } from '@/api/product-requests.api';
 import { useRouter } from 'next/navigation';
 import { useAuthUser } from '@/hooks/useAuthUser';
-import { useFetchData } from '@/hooks/useFetchData';
+// REMOVED: import { useFetchData } from '@/hooks/useFetchData'; // This hook is for paginated data
 import RequestListSection from '@/components/RequestListSection';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react'; // Import useState and useEffect
 
 export default function ProductRequestsPage() {
   const router = useRouter();
   const { user, loading: userLoading, error: userError } = useAuthUser();
   const currentShopkeeperId = user?.shopkeeperId || null;
 
-  // // Logging (keep for now if still debugging)
-  // console.log('Requests Page - useAuthUser loading:', userLoading);
-  // console.log('Requests Page - useAuthUser error:', userError);
-  // console.log('Requests Page - Authenticated User object:', user);
-  // console.log('Requests Page - Derived currentShopkeeperId:', currentShopkeeperId);
+  const [requests, setRequests] = useState<ProductRequestData[]>([]); // Use useState for requests
+  const [loadingRequests, setLoadingRequests] = useState(true); // Separate loading state for requests
+  const [requestsError, setRequestsError] = useState<string | null>(null); // Separate error state for requests
 
+  // Function to fetch product requests
+  const fetchRequests = useCallback(async () => {
+    if (!currentShopkeeperId) {
+      setRequests([]);
+      setLoadingRequests(false);
+      return;
+    }
+    setLoadingRequests(true);
+    setRequestsError(null);
+    try {
+      const fetchedRequests = await productRequestsApi.getAllRequestsForShopkeeper();
+      setRequests(fetchedRequests);
+    } catch (err: any) {
+      console.error('Failed to fetch product requests:', err);
+      setRequestsError(err?.response?.data?.message || 'Failed to load product requests.');
+    } finally {
+      setLoadingRequests(false);
+    }
+  }, [currentShopkeeperId]); // Dependency on currentShopkeeperId
 
-  // Memoize the fetch function for requests
-  const fetchAllRequests = useCallback(
-    () => productRequestsApi.getAllRequestsForShopkeeper(),
-    []
-  );
+  // Fetch requests when component mounts or currentShopkeeperId changes
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]); // Dependency on fetchRequests (which depends on currentShopkeeperId)
 
-  // Use useFetchData for product requests, refetch when currentShopkeeperId changes
-  const {
-    data: requests,
-    loading: requestsLoading,
-    error: requestsError,
-    refetch: refetchRequests,
-  } = useFetchData<ProductRequest[]>( // Correct type argument
-    fetchAllRequests,
-    [currentShopkeeperId]
-  );
-
-  const loading = userLoading || requestsLoading;
-  const error = userError || requestsError;
+  const loading = userLoading || loadingRequests; // Combine loading states
+  const error = userError || requestsError; // Combine error states
 
   const handleUpdateStatus = useCallback(async (requestId: string, status: ProductRequestStatus) => {
     if (!window.confirm(`Are you sure you want to ${status.toLowerCase()} this request?`)) {
@@ -50,12 +54,12 @@ export default function ProductRequestsPage() {
       const payload: UpdateProductRequestPayload = { status };
       await productRequestsApi.updateRequestStatus(requestId, payload);
       alert(`Request ${status.toLowerCase()} successfully!`);
-      await refetchRequests();
+      await fetchRequests(); // Re-fetch after status update
     } catch (err: any) {
       console.error(`Failed to ${status.toLowerCase()} request:`, err);
       alert(err.message || `Failed to ${status.toLowerCase()} request.`);
     }
-  }, [refetchRequests]);
+  }, [fetchRequests]);
 
   const handleCancelRequest = useCallback(async (requestId: string) => {
     if (!window.confirm('Are you sure you want to cancel this request?')) {
@@ -64,19 +68,19 @@ export default function ProductRequestsPage() {
     try {
       await productRequestsApi.deleteRequest(requestId);
       alert('Request cancelled successfully!');
-      await refetchRequests();
+      await fetchRequests(); // Re-fetch after cancellation
     } catch (err: any) {
       console.error('Failed to cancel request:', err);
       alert(err.message || 'Failed to cancel request.');
     }
-  }, [refetchRequests]);
+  }, [fetchRequests]);
 
+  // Ensure requests is an array before filtering
   const outgoingRequests = Array.isArray(requests) ? requests.filter(req => req.initiatorId === currentShopkeeperId) : [];
   const incomingRequests = Array.isArray(requests) ? requests.filter(req => req.requesterId === currentShopkeeperId) : [];
 
-
   return (
-    <div className="container mx-auto p-6 md:p-10 bg-gray-50 min-h-[calc(100vh-80px)] rounded-xl shadow-inner"> {/* Enhanced outer container */}
+    <div className="container mx-auto p-6 md:p-10 bg-gray-50 min-h-[calc(100vh-80px)] rounded-xl shadow-inner">
       {/* Page Header Section */}
       <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
         <h1 className="text-4xl font-extrabold text-gray-900">Product Transfer Requests</h1>
@@ -88,7 +92,7 @@ export default function ProductRequestsPage() {
       ) : error ? (
         <div className="text-red-600 text-center py-20">
           <p className="text-xl font-medium mb-2">Error loading requests:</p>
-          <p>{error}</p> {/* Use error directly as per previous preference */}
+          <p>{error}</p>
         </div>
       ) : (
         <>
@@ -99,7 +103,7 @@ export default function ProductRequestsPage() {
             type="outgoing"
             currentShopkeeperId={currentShopkeeperId}
             onCancelRequest={handleCancelRequest}
-            loading={requestsLoading} // Pass requestsLoading to sub-section
+            loading={loadingRequests} // Pass requestsLoading to sub-section
           />
 
           <RequestListSection
@@ -109,7 +113,7 @@ export default function ProductRequestsPage() {
             type="incoming"
             currentShopkeeperId={currentShopkeeperId}
             onUpdateStatus={handleUpdateStatus}
-            loading={requestsLoading} // Pass requestsLoading to sub-section
+            loading={loadingRequests} // Pass requestsLoading to sub-section
           />
         </>
       )}
