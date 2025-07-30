@@ -10,8 +10,6 @@ interface AuthenticatedRequest extends Request {
   user: {
     shopkeeperId: string;
     email: string;
-    // Add other fields that might be in the JWT payload if necessary,
-    // but the full profile will be fetched from the service
   };
 }
 

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule } from './database/database.module';
-import { AuthModule } from './auth/auth.module';
-import { ProductModule } from './product/product.module';
-import { ProductRequestModule } from './product-request/product-request.module';
-import { ShopkeeperModule } from './shopkeeper/shopkeeper.module';
-import { ProductTransferHistoryModule } from './product-transfer-history/product-transfer-history.module'; // Import new module
+import { DatabaseModule } from './modules/database/database.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { ProductModule } from './modules/product/product.module';
+import { ProductRequestModule } from './modules/product-request/product-request.module';
+import { ShopkeeperModule } from './modules/shopkeeper/shopkeeper.module';
+import { ProductTransferHistoryModule } from './modules/product-transfer-history/product-transfer-history.module'; // Import new module
 
 @Module({
   imports: [
