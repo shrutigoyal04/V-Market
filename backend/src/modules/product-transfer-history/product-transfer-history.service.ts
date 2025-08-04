@@ -10,36 +10,30 @@ export class ProductTransferHistoryService {
   constructor(
     @InjectRepository(ProductTransferHistory)
     private productTransferHistoryRepository: Repository<ProductTransferHistory>,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
-    @InjectRepository(Shopkeeper)
-    private shopkeeperRepository: Repository<Shopkeeper>,
   ) {}
 
-  async findAllHistoryForShopkeeper(shopkeeperId: string): Promise<ProductTransferHistory[]> {
+  async findAllForShopkeeper(shopkeeperId: string): Promise<ProductTransferHistory[]> {
     return this.productTransferHistoryRepository.find({
       where: [
-        { initiatorShopkeeper: { id: shopkeeperId } },
-        { receiverShopkeeper: { id: shopkeeperId } },
+        { initiatorShopkeeperId: shopkeeperId },
+        { receiverShopkeeperId: shopkeeperId },
       ],
       relations: ['product', 'initiatorShopkeeper', 'receiverShopkeeper', 'request'],
-      order: { createdAt: 'DESC' },
+      order: {
+        createdAt: 'DESC',
+      },
     });
   }
 
-  async findOneHistory(id: string, shopkeeperId: string): Promise<ProductTransferHistory> {
-    const historyRecord = await this.productTransferHistoryRepository.findOne({
-      where: [
-        { id, initiatorShopkeeper: { id: shopkeeperId } },
-        { id, receiverShopkeeper: { id: shopkeeperId } },
-      ],
+  async findOne(id: string): Promise<ProductTransferHistory> {
+    const record = await this.productTransferHistoryRepository.findOne({
+      where: { id },
       relations: ['product', 'initiatorShopkeeper', 'receiverShopkeeper', 'request'],
     });
-
-    if (!historyRecord) {
-      throw new NotFoundException(`Product transfer history record with ID "${id}" not found or unauthorized.`);
+    if (!record) {
+      throw new NotFoundException(`Product transfer history record with ID ${id} not found.`);
     }
-    return historyRecord;
+    return record;
   }
 }
 

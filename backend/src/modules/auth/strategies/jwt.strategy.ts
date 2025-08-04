@@ -1,11 +1,19 @@
-import { Injectable } from '@nestjs/common';
+// backend/src/modules/auth/strategies/jwt.strategy.ts
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Shopkeeper } from '../../database/entities/shopkeeper.entity';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  constructor(
+    @InjectRepository(Shopkeeper)
+    private shopkeeperRepository: Repository<Shopkeeper>,
+    private configService: ConfigService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -14,7 +22,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // console.log('Backend JwtStrategy: Validating payload:', payload); // LOG 13
-    return { shopkeeperId: payload.sub, email: payload.email, shopName: payload.shopName }; // Added shopName
+    const shopkeeper = await this.shopkeeperRepository.findOne({ where: { id: payload.sub } });
+    if (!shopkeeper) {
+      throw new UnauthorizedException();
+    }
+    return { shopkeeperId: shopkeeper.id, email: shopkeeper.email, shopName: shopkeeper.shopName };
   }
 }

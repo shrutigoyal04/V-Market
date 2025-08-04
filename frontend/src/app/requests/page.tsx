@@ -8,6 +8,14 @@ import { useAuthUser } from '@/hooks/useAuthUser';
 // REMOVED: import { useFetchData } from '@/hooks/useFetchData'; // This hook is for paginated data
 import RequestListSection from '@/components/RequestListSection';
 import { useCallback, useEffect, useState } from 'react'; // Import useState and useEffect
+import { getSocket } from '@/lib/socket'; // Your socket instance
+import type { ProductRequest } from '@/types/product'; // Adjust path as needed
+
+type ProductRequestUpdatePayload = {
+  requestId: string;
+  status: string;
+  updatedRequest: ProductRequest;
+};
 
 export default function ProductRequestsPage() {
   const router = useRouter();
@@ -42,6 +50,21 @@ export default function ProductRequestsPage() {
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]); // Dependency on fetchRequests (which depends on currentShopkeeperId)
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    function handleProductRequestUpdate({ requestId, status, updatedRequest }: ProductRequestUpdatePayload) {
+      fetchRequests();
+      // Or update local state as needed
+    }
+
+    socket.on('productRequest.updated', handleProductRequestUpdate);
+
+    return () => {
+      socket.off('productRequest.updated', handleProductRequestUpdate);
+    };
+  }, [fetchRequests]);
 
   const loading = userLoading || loadingRequests; // Combine loading states
   const error = userError || requestsError; // Combine error states

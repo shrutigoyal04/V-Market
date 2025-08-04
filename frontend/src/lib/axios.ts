@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import Cookies from 'js-cookie'; // Add this import
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL;
+const baseURL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
 export const axiosInstance = axios.create({
   baseURL,
@@ -37,8 +37,6 @@ axiosInstance.interceptors.response.use(
     // --- Enhanced Error Handling ---
     let errorMessage = 'An unexpected error occurred.';
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
       if (error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data) {
         // Assume backend sends a 'message' field in its error response
         const backendMessage = (error.response.data as { message: string | string[] }).message;

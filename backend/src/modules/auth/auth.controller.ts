@@ -1,10 +1,11 @@
+// backend/src/modules/auth/auth.controller.ts
 import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express'; // Ensure Request is imported
-import { Shopkeeper } from '../database/entities/shopkeeper.entity'; // Import Shopkeeper entity
+import { Request } from 'express';
+import { Shopkeeper } from '../database/entities/shopkeeper.entity'; // Corrected Path: from auth to database (sibling in modules)
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -31,8 +32,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @Get('profile')
   async getProfile(@Req() req: AuthenticatedRequest) {
-    // Fetch the full shopkeeper profile using the shopkeeperId from the token
     const shopkeeper = await this.authService.getShopkeeperProfile(req.user.shopkeeperId);
-    return shopkeeper; // Return the full shopkeeper object
+    return shopkeeper;
   }
 }

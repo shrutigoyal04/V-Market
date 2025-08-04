@@ -1,17 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpCode, HttpStatus, Query } from '@nestjs/common'; // Add Query
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Request } from 'express';
-
-interface AuthenticatedRequest extends Request {
-  user: {
-    shopkeeperId: string;
-    email: string;
-    shopName: string;
-  };
-}
+import { AuthenticatedRequest } from '../../common/interfaces/authenticated-socket.interface'; // Import AuthenticatedRequest
 
 @Controller('products')
 export class ProductController {
@@ -30,12 +22,11 @@ export class ProductController {
     @Query('limit') limit: string = '10',
     @Query('search') search?: string,
   ) {
-    // FIX: Ensure parseInt result is not NaN, fallback to defaults
     const parsedPage = parseInt(page, 10);
     const parsedLimit = parseInt(limit, 10);
 
     const actualPage = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
-    const actualLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 10 : parsedLimit; // Keep 10 as default
+    const actualLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 10 : parsedLimit;
 
     return this.productService.findAll(actualPage, actualLimit, search);
   }
@@ -44,6 +35,7 @@ export class ProductController {
   @Get('my-products')
   async findMyProducts(@Req() req: AuthenticatedRequest) {
     const shopkeeperId = req.user.shopkeeperId;
+    // Assuming productService.findByShopkeeperId exists and is for authenticated user's products
     const products = await this.productService.findByShopkeeperId(shopkeeperId);
     return { shopkeeperId, products };
   }
@@ -55,7 +47,8 @@ export class ProductController {
 
   @Get('shop/:shopkeeperId')
   findShopkeeperProductsPublic(@Param('shopkeeperId') shopkeeperId: string) {
-    return this.productService.findProductsByShopkeeperIdPublic(shopkeeperId);
+    // Corrected method name: assuming the service method is findProductsByShopId
+    return this.productService.findProductsByShopId(shopkeeperId);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -68,6 +61,7 @@ export class ProductController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
-    return this.productService.remove(id, req.user.shopkeeperId);
+    // Corrected method name: assuming the service method is delete
+    return this.productService.delete(id, req.user.shopkeeperId);
   }
 }

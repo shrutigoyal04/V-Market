@@ -1,8 +1,9 @@
+// backend/src/modules/auth/auth.service.ts
 import { Injectable, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Shopkeeper } from '../database/entities/shopkeeper.entity';
+import { Shopkeeper } from '../database/entities/shopkeeper.entity'; // Corrected Path: from auth to database (sibling in modules)
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -15,7 +16,6 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    // Check if a shopkeeper with this email already exists
     const existingShopkeeper = await this.shopkeeperRepository.findOne({ where: { email: registerDto.email } });
     if (existingShopkeeper) {
       throw new BadRequestException('Email already registered.');
@@ -39,7 +39,7 @@ export class AuthService {
   }
 
   private generateToken(shopkeeper: Shopkeeper) {
-    const payload = { sub: shopkeeper.id, email: shopkeeper.email, shopName: shopkeeper.shopName }; // Added shopName
+    const payload = { sub: shopkeeper.id, email: shopkeeper.email, shopName: shopkeeper.shopName, shopkeeperId: shopkeeper.id };
     return {
       access_token: this.jwtService.sign(payload),
     };

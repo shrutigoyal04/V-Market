@@ -1,4 +1,4 @@
-// backend/src/database/entities/product-request.entity.ts
+// backend/src/modules/database/entities/product-request.entity.ts
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Product } from './product.entity';
@@ -8,26 +8,26 @@ export enum ProductRequestStatus {
   PENDING = 'PENDING',
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED',
-  COMPLETED = 'COMPLETED', // After actual transfer/inventory update
+  CANCELLED = 'CANCELLED', // <--- THIS MUST BE PRESENT AND CORRECTLY SPELLED/CAPITALIZED
 }
 
 @Entity('product_requests')
 export class ProductRequest extends BaseEntity {
-  @ManyToOne(() => Product, { eager: true }) // eager: true to load product details automatically
+  @ManyToOne(() => Product, product => product.productRequests, { eager: true }) // eager: true to load product details automatically
   @JoinColumn({ name: 'productId' }) // Explicitly define join column name
   product: Product;
 
   @Column()
   productId: string; // Storing the product ID directly for relation reference
 
-  @ManyToOne(() => Shopkeeper, { eager: true })
+  @ManyToOne(() => Shopkeeper, shopkeeper => shopkeeper.sentRequests, { eager: true })
   @JoinColumn({ name: 'requesterId' }) // Shopkeeper requesting the product
   requester: Shopkeeper;
 
   @Column()
   requesterId: string;
 
-  @ManyToOne(() => Shopkeeper, { eager: true })
+  @ManyToOne(() => Shopkeeper, shopkeeper => shopkeeper.receivedRequests, { eager: true })
   @JoinColumn({ name: 'initiatorId' }) // Shopkeeper initiating the request (the owner of the product)
   initiator: Shopkeeper; // Renamed from 'owner' to 'initiator' for clarity in a request
 
@@ -43,4 +43,7 @@ export class ProductRequest extends BaseEntity {
     default: ProductRequestStatus.PENDING,
   })
   status: ProductRequestStatus;
+
+  @Column({ nullable: true })
+  notes: string;
 }

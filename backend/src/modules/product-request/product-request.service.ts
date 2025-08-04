@@ -7,6 +7,7 @@ import { Shopkeeper } from '../database/entities/shopkeeper.entity';
 import { CreateProductRequestDto } from './dto/create-product-request.dto';
 import { UpdateProductRequestDto } from './dto/update-product-request.dto';
 import { ProductTransferHistory } from '../database/entities/product-transfer-history.entity'; // Import new entity
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class ProductRequestService {
@@ -20,6 +21,7 @@ export class ProductRequestService {
     @InjectRepository(ProductTransferHistory) // Inject new history repository
     private productTransferHistoryRepository: Repository<ProductTransferHistory>,
     private dataSource: DataSource,
+    private notificationService: NotificationService,
   ) {}
 
   // Initiator (owner of product) makes an export request
@@ -62,7 +64,9 @@ export class ProductRequestService {
       status: ProductRequestStatus.PENDING,
     });
 
-    return this.productRequestRepository.save(productRequest);
+    const savedRequest = await this.productRequestRepository.save(productRequest);
+    await this.notificationService.handleProductRequestSent(savedRequest);
+    return savedRequest;
   }
 
 
@@ -177,6 +181,7 @@ export class ProductRequestService {
         // --- END NEW ---
 
         await queryRunner.commitTransaction();
+        await this.notificationService.handleProductRequestStatusUpdate(updatedRequest, ProductRequestStatus.ACCEPTED);
         return updatedRequest;
 
       } catch (err) {

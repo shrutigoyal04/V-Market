@@ -2,13 +2,14 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar'; // Import the new Navbar component
+import Navbar from '../components/Navbar';
+import { Toaster } from 'react-hot-toast'; // Import Toaster
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'V-Market',
-  description: 'Shopkeeper Product Transfer Platform',
+  title: 'V-Market App',
+  description: 'Product Transfer Marketplace for Shopkeepers',
 };
 
 export default function RootLayout({
@@ -19,10 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navbar /> {/* Render the Navbar component here */}
-        <main className="container mx-auto py-8">
-          {children}
-        </main>
+        <Navbar />
+        {children}
+        <Toaster position="bottom-right" /> {/* Add Toaster component */}
       </body>
     </html>
   );
