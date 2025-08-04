@@ -13,7 +13,7 @@ const updateShopkeeperSchema = z.object({
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   shopName: z.string().min(3, 'Shop name must be at least 3 characters').optional().or(z.literal('')),
   address: z.string().min(5, 'Address must be at least 5 characters').optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
+  phone: z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number format').optional().or(z.literal('')),
 }).partial(); // Make all fields optional for partial updates
 
 type UpdateShopkeeperFormData = z.infer<typeof updateShopkeeperSchema>;

@@ -179,7 +179,7 @@ const RegisterForm: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-lg font-medium rounded-md text-white bg-indigo-700 hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-lg font-medium rounded-md text-white bg-indigo-900 hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Registering...' : 'Register'}
           </button>
@@ -188,7 +188,7 @@ const RegisterForm: React.FC = () => {
       {/* Moved the sign-in link here, similar to LoginForm */}
       <div className="text-center text-sm mt-4">
         Already have an account?{' '}
-        <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+        <Link href="/login" className="font-medium text-indigo-900 hover:text-indigo-500">
           Sign in
         </Link>
       </div>
